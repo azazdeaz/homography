@@ -10,3 +10,11 @@ arrayfire = "3.8.0"
 nalgebra = "0.29.0"
 bevy = "0.5"
 bevy_egui = "0.7"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "test_proj"
+path = "src/test_proj.rs"
