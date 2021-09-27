@@ -30,12 +30,12 @@ impl Default for Camera {
         Self {
             width: 300.0,
             height: 200.0,
-            fovy: 2.9,
+            fovy: 1.9,
             znear: 1.0,
             zfar: 100.0,
             x: 0.0,
             y: 0.0,
-            z: -1.0,
+            z: 1.0,
             target_x: 0.0,
             target_y: 0.0,
             target_z: 0.0,
@@ -76,16 +76,18 @@ fn add_cameras(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mesh = Mesh::new(PrimitiveTopology::LineList);
-    let pbr = PbrBundle {
-        mesh: meshes.add(mesh),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..Default::default()
-    };
-    commands
-        .spawn()
-        .insert_bundle(pbr)
-        .insert(Camera::default());
+    for _ in 0..2 {
+        let mesh = Mesh::new(PrimitiveTopology::LineList);
+        let pbr = PbrBundle {
+            mesh: meshes.add(mesh),
+            material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+            ..Default::default()
+        };
+        commands
+            .spawn()
+            .insert_bundle(pbr)
+            .insert(Camera::default());
+    }
 }
 
 fn add_points(
@@ -94,8 +96,8 @@ fn add_points(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let plane = Plane {
-        width: 100.0,
-        height: 100.0,
+        width: 10.0,
+        height: 10.0,
         points_x: 5,
         points_y: 5,
         x: 0.0,
@@ -124,24 +126,9 @@ fn ui_example(
     mut planes: Query<(&mut Plane, &Handle<Mesh>)>,
     mut cameras: Query<(&mut Camera, &Handle<Mesh>)>,
 ) {
-    egui::Window::new("Hello").show(egui_context.ctx(), |ui| {
-        let (mut camera, mut camera_mesh) = if let Ok(camera) = cameras.single_mut() {
-            camera
-        } else {
-            return;
-        };
+    let mut rendered_points = Vec::new();
+    egui::Window::new("Items").show(egui_context.ctx(), |ui| {
         ui.label("world");
-        ui.collapsing("camera", |ui| {
-            ui.add(egui::Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
-            ui.add(egui::Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
-            ui.add(egui::Slider::new(&mut camera.fovy, (3.14 / 8.0)..=3.14).text("fovy"));
-            ui.add(egui::Slider::new(&mut camera.x, -100.0..=100.0).text("x"));
-            ui.add(egui::Slider::new(&mut camera.y, -100.0..=100.0).text("y"));
-            ui.add(egui::Slider::new(&mut camera.z, -100.0..=100.0).text("z"));
-            ui.add(egui::Slider::new(&mut camera.target_x, -100.0..=100.0).text("target_x"));
-            ui.add(egui::Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
-            ui.add(egui::Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
-        });
 
         let mut transforms = Vec::new();
         for (mut plane, _) in planes.iter_mut() {
@@ -158,125 +145,145 @@ fn ui_example(
             let transform = Isometry3::new(translation, axisangle);
             transforms.push(transform);
         }
+        for (camera_id, (mut camera, mut camera_mesh)) in cameras.iter_mut().enumerate() {
+            ui.collapsing(format!("camera {}", camera_id), |ui| {
+                ui.add(egui::Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
+                ui.add(egui::Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
+                ui.add(egui::Slider::new(&mut camera.fovy, (3.14 / 8.0)..=3.14).text("fovy"));
+                ui.add(egui::Slider::new(&mut camera.x, -100.0..=100.0).text("x"));
+                ui.add(egui::Slider::new(&mut camera.y, -100.0..=100.0).text("y"));
+                ui.add(egui::Slider::new(&mut camera.z, -100.0..=100.0).text("z"));
+                ui.add(egui::Slider::new(&mut camera.target_x, -100.0..=100.0).text("target_x"));
+                ui.add(egui::Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
+                ui.add(egui::Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
+            });
 
-        let width = camera.width;
-        let height = camera.height;
+            let points = {
+                let model = Isometry3::new(Vector3::x(), na::zero());
 
-        let (response, mut painter) =
-            ui.allocate_painter(ui.available_size_before_wrap_finite(), egui::Sense::drag());
+                // Our camera looks toward the point (1.0, 0.0, 0.0).
+                // It is located at (0.0, 0.0, 1.0).
+                let eye = Point3::new(camera.x, camera.y, camera.z);
+                let target = Point3::new(camera.target_x, camera.target_y, camera.target_z);
+                let view = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
 
-        let left_top = response.rect.left_top();
-        ui.expand_to_include_rect(painter.clip_rect());
-        painter.add(Shape::closed_line(
-            vec![(0.0, 0.0), (0.0, height), (width, height), (width, 0.0)]
-                .into_iter()
-                .map(|p| left_top + p.into())
-                .collect::<Vec<_>>(),
-            (4.0, Color32::RED),
-        ));
+                // A perspective projection.
+                let projection = Perspective3::new(
+                    camera.width / camera.height,
+                    camera.fovy,
+                    camera.znear,
+                    camera.zfar,
+                );
 
-        let points = {
-            let model = Isometry3::new(Vector3::x(), na::zero());
+                // The combination of the model with the view is still an isometry.
+                let model_view = view * model;
 
-            // Our camera looks toward the point (1.0, 0.0, 0.0).
-            // It is located at (0.0, 0.0, 1.0).
-            let eye = Point3::new(camera.x, camera.y, camera.z);
-            let target = Point3::new(camera.target_x, camera.target_y, camera.target_z);
-            let view = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
+                // Convert everything to a `Matrix4` so that they can be combined.
+                let mat_model_view = model_view.to_homogeneous();
 
-            // A perspective projection.
-            let projection =
-                Perspective3::new(width / height, camera.fovy, camera.znear, camera.zfar);
+                // Combine everything.
+                // let translation = Translation3::new(camera.x, camera.y, camera.z).to_homogeneous();
+                let model_view_projection = projection.as_matrix() * mat_model_view;
+                let inv_model_view_projection = model_view_projection
+                    .try_inverse()
+                    .expect("cant invert projection matrix");
 
-            // The combination of the model with the view is still an isometry.
-            let model_view = view * model;
+                // let proj = Perspective3::from_matrix_unchecked(model_view_projection);
+                let mut points = Vec::new();
+                for ((plane, mut mesh), transform) in zip(planes.iter_mut(), &transforms) {
+                    let mut vertices = Vec::new();
+                    for xi in 0..plane.points_x {
+                        for yi in 0..plane.points_y {
+                            let p = Point3::new(
+                                -plane.width / 2.0
+                                    + (plane.width / ((plane.points_x - 1) as f32)) * xi as f32,
+                                -plane.height / 2.0
+                                    + (plane.height / ((plane.points_y - 1) as f32)) * yi as f32,
+                                -10.0,
+                            );
+                            let p = transform * p;
+                            vertices.push([p.coords.x, p.coords.y, p.coords.z]);
+                            let pp = model_view_projection * p.to_homogeneous();
+                            let pp = Point3::from_homogeneous(pp);
+                            // let pp = proj.project_point(&p);
 
-            // Convert everything to a `Matrix4` so that they can be combined.
-            let mat_model_view = model_view.to_homogeneous();
-
-            // Combine everything.
-            // let translation = Translation3::new(camera.x, camera.y, camera.z).to_homogeneous();
-            let model_view_projection = projection.as_matrix() * mat_model_view;
-            let inv_model_view_projection = model_view_projection
-                .try_inverse()
-                .expect("cant invert projection matrix");
-
-            // let proj = Perspective3::from_matrix_unchecked(model_view_projection);
-            let mut points = Vec::new();
-            for ((plane, mut mesh), transform) in zip(planes.iter_mut(), transforms) {
-                let mut vertices = Vec::new();
-                for xi in 0..plane.points_x {
-                    for yi in 0..plane.points_y {
-                        let p = Point3::new(
-                            -plane.width / 2.0
-                                + (plane.width / ((plane.points_x - 1) as f32)) * xi as f32,
-                            -plane.height / 2.0
-                                + (plane.height / ((plane.points_y - 1) as f32)) * yi as f32,
-                            -10.0,
-                        );
-                        let p = transform * p;
-                        vertices.push([p.coords.x, p.coords.y, p.coords.z]);
-                        let pp = model_view_projection * p.to_homogeneous();
-                        let pp = Point3::from_homogeneous(pp);
-                        // let pp = proj.project_point(&p);
-
-                        if let Some(pp) = pp {
-                            if pp.coords.x.abs() <= 1.0
-                                && pp.coords.y.abs() <= 1.0
-                                && pp.coords.z.abs() <= 1.0
-                            {
-                                let x = (pp.coords.x + 1.0) * width / 2.0;
-                                let y = (pp.coords.y + 1.0) * height / 2.0;
-                                points.push(left_top + (x, y).into());
+                            if let Some(pp) = pp {
+                                if pp.coords.x.abs() <= 1.0
+                                    && pp.coords.y.abs() <= 1.0
+                                    && pp.coords.z.abs() <= 1.0
+                                {
+                                    points.push(pp);
+                                }
                             }
                         }
                     }
+
+                    let mut mesh = meshes.get_mut(mesh).unwrap();
+                    fill_mesh_with_vertices(mesh, vertices);
                 }
 
-                let mut mesh = meshes.get_mut(mesh).unwrap();
-                fill_mesh_with_vertices(mesh, vertices);
-            }
+                // cube corners as in https://www.cs.bham.ac.uk/~slb/courses/Graphics/g63.html
+                let corners = [
+                    &na::Point3::new(-1.0, 1.0, -1.0),
+                    &na::Point3::new(1.0, 1.0, -1.0),
+                    &na::Point3::new(1.0, -1.0, -1.0),
+                    &na::Point3::new(-1.0, -1.0, -1.0),
+                    &na::Point3::new(-1.0, 1.0, 1.0),
+                    &na::Point3::new(1.0, 1.0, 1.0),
+                    &na::Point3::new(1.0, -1.0, 1.0),
+                    &na::Point3::new(-1.0, -1.0, 1.0),
+                ]
+                .iter()
+                .map(|p| inv_model_view_projection * p.to_homogeneous())
+                .map(|h| Point3::from_homogeneous(h).unwrap())
+                .map(|v| [v.coords.x, v.coords.y, v.coords.z])
+                .collect_vec();
+                let mut vertices = vec![
+                    corners[0], corners[1], corners[1], corners[2], corners[2], corners[3],
+                    corners[3], corners[0], corners[4], corners[5], corners[5], corners[6],
+                    corners[6], corners[7], corners[7], corners[4], corners[0], corners[4],
+                    corners[1], corners[5], corners[2], corners[6], corners[3], corners[7],
+                ];
+                vertices.append(&mut utils::cross_lines(&eye, 1.0));
+                vertices.append(&mut utils::cross_lines(&target, 1.0));
+                let mut camera_mesh = meshes.get_mut(camera_mesh).unwrap();
+                fill_mesh_with_vertices(camera_mesh, vertices);
 
-            // cube corners as in https://www.cs.bham.ac.uk/~slb/courses/Graphics/g63.html
-            let corners = [
-                &na::Point3::new(-1.0, 1.0, -1.0),
-                &na::Point3::new(1.0, 1.0, -1.0),
-                &na::Point3::new(1.0, -1.0, -1.0),
-                &na::Point3::new(-1.0, -1.0, -1.0),
-                &na::Point3::new(-1.0, 1.0, 1.0),
-                &na::Point3::new(1.0, 1.0, 1.0),
-                &na::Point3::new(1.0, -1.0, 1.0),
-                &na::Point3::new(-1.0, -1.0, 1.0),
-            ]
-            .iter()
-            .map(|p| inv_model_view_projection * p.to_homogeneous())
-            .map(|h| Point3::from_homogeneous(h).unwrap())
-            .map(|v| [v.coords.x, v.coords.y, v.coords.z])
-            .collect_vec();
-            let mut vertices = vec![
-                corners[0], corners[1], corners[1], corners[2], corners[2], corners[3], corners[3],
-                corners[0], corners[4], corners[5], corners[5], corners[6], corners[6], corners[7],
-                corners[7], corners[4], corners[0], corners[4], corners[1], corners[5], corners[2],
-                corners[6], corners[3], corners[7],
-            ];
-            vertices.append(&mut utils::cross_lines(&eye, 1.0));
-            vertices.append(&mut utils::cross_lines(&target, 1.0));
-            let mut camera_mesh = meshes.get_mut(camera_mesh).unwrap();
-            fill_mesh_with_vertices(camera_mesh, vertices);
-
-            points
-        };
-
-        for point in points {
-            painter.add(Shape::circle_filled(point, 4.0, Color32::LIGHT_GRAY));
+                rendered_points.push(points);
+            };
         }
-
-        painter.debug_rect(
-            Rect::from_min_max(pos2(0.0, 10.0), pos2(90.0, 120.0)),
-            Color32::GOLD,
-            "text",
-        );
     });
+
+    for (camera_id, ((camera, _), points)) in zip(cameras.iter_mut(), rendered_points).enumerate() {
+        let width = camera.width;
+        let height = camera.height;
+        egui::Window::new(format!("Camera {} Image", camera_id))
+            .default_size((width, height))
+            .show(egui_context.ctx(), |ui| {
+                let (response, mut painter) = ui
+                    .allocate_painter(ui.available_size_before_wrap_finite(), egui::Sense::drag());
+
+                let left_top = response.rect.left_top();
+                ui.expand_to_include_rect(painter.clip_rect());
+                painter.add(Shape::closed_line(
+                    vec![(0.0, 0.0), (0.0, height), (width, height), (width, 0.0)]
+                        .into_iter()
+                        .map(|p| left_top + p.into())
+                        .collect::<Vec<_>>(),
+                    (4.0, Color32::RED),
+                ));
+
+                for point in points {
+                    let x = (point.coords.x + 1.0) * width / 2.0;
+                    let y = (point.coords.y + 1.0) * height / 2.0;
+                    painter.add(Shape::circle_filled(
+                        left_top + (x, y).into(),
+                        4.0,
+                        Color32::LIGHT_GRAY,
+                    ));
+                }
+            });
+    }
 }
 
 fn fill_mesh_with_vertices(mesh: &mut Mesh, vertices: Vec<[f32; 3]>) {
