@@ -10,6 +10,8 @@ arrayfire = "3.8.0"
 nalgebra = "0.29.0"
 bevy = "0.5"
 bevy_egui = "0.7"
+itertools = "0.10.1"
+
 
 [[bin]]
 name = "main"

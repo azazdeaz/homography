@@ -1,43 +1,58 @@
-use nalgebra::{self as na, *};
+use bevy::prelude::*;
 
 fn main() {
-    let width = 300.0;
-    let height = 200.0;
-    // let proj = Perspective3::new(1.0 / 1.0, 3.14 / 4.0, 1.0, 10000.0);
-    // let proj2 = proj * Translation3::new(1.0, 0.0, 0.0);
-    let p = Point3::new(1.0, 2.0, -10.0);
-    // println!("proj {:?}", proj.project_point(&p));
-    // println!("proj {:?}", proj2.project_point(&p));
+    App::build()
+        .insert_resource(Msaa { samples: 4 })
+        .add_plugins(DefaultPlugins)
+        .add_startup_system(setup.system())
+        .run();
+}
 
-    // let projection = Perspective3::new(800.0 / 600.0, 3.14/ 2.0, 1.0, 1000.0);
-    // let screen_point = Point2::new(10.0f32, 20.0);
-    // println!("proj {:?}", projection.project_point(&screen_point));
+/// set up a simple 3D scene
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    let vertices = [
+        ([0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0]),
+        ([1.0, 2.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0]),
+        ([2.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0]),
+    ];
 
-    let model = Isometry3::new(Vector3::x(), na::zero());
+    let indices = bevy::render::mesh::Indices::U32(vec![0, 2, 1, 0, 3, 2]);
 
-    // Our camera looks toward the point (1.0, 0.0, 0.0).
-    // It is located at (0.0, 0.0, 1.0).
-    let eye    = Point3::new(0.0, 0.0, 1.0);
-    let target = Point3::new(0.0, 0.0, 0.0);
-    let view   = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
+    let mut positions = Vec::new();
+    let mut normals = Vec::new();
+    let mut uvs = Vec::new();
+    for (position, normal, uv) in vertices.iter() {
+        positions.push(*position);
+        normals.push(*normal);
+        uvs.push(*uv);
+    }
 
-    // A perspective projection.
-    let projection = Perspective3::new(width/height, 3.14 / 2.0, 1.0, 1000.0);
+    let mut mesh = Mesh::new(bevy::render::pipeline::PrimitiveTopology::LineStrip);
+    mesh.set_indices(Some(indices));
+    mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.set_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
 
-    // The combination of the model with the view is still an isometry.
-    let model_view = view * model;
-
-    // Convert everything to a `Matrix4` so that they can be combined.
-    let mat_model_view = model_view.to_homogeneous();
-
-    // Combine everything.
-    let model_view_projection = projection.as_matrix() * mat_model_view;
-
-    let proj = Perspective3::from_matrix_unchecked(model_view_projection);
-    let pp = proj.project_point(&p);
-
-    let x = (pp.coords.x + 1.0) * width / 2.0;
-    let y = (pp.coords.y + 1.0) * height / 2.0;
-
-    println!("proj {:?} x:{} y:{}", pp, x, y);
+    // add entities to the world
+    // plane
+    commands.spawn_bundle(PbrBundle {
+        mesh: meshes.add(mesh),
+        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+        ..Default::default()
+    });
+    // light
+    commands.spawn_bundle(LightBundle {
+        transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
+        ..Default::default()
+    });
+    // camera
+    commands.spawn_bundle(PerspectiveCameraBundle {
+        transform: Transform::from_translation(Vec3::new(-2.0, 2.5, 5.0))
+            .looking_at(Vec3::default(), Vec3::unit_y()),
+        ..Default::default()
+    });
 }
