@@ -1,3 +1,4 @@
+use arrayfire as af;
 use bevy::{
     prelude::{Transform, *},
     render::{mesh::Indices, pipeline::PrimitiveTopology},
@@ -8,6 +9,7 @@ use bevy_egui::{
 };
 use itertools::{zip, Itertools};
 use nalgebra::{self as na, *};
+
 mod orbit_camera;
 mod utils;
 
@@ -188,7 +190,6 @@ fn ui_example(
                     .try_inverse()
                     .expect("cant invert projection matrix");
 
-                // let proj = Perspective3::from_matrix_unchecked(model_view_projection);
                 let mut points = Vec::new();
                 for ((plane, mut mesh), transform) in zip(planes.iter_mut(), &transforms) {
                     let mut vertices = Vec::new();
@@ -205,7 +206,6 @@ fn ui_example(
                             vertices.push([p.coords.x, p.coords.y, p.coords.z]);
                             let pp = model_view_projection * p.to_homogeneous();
                             let pp = Point3::from_homogeneous(pp);
-                            // let pp = proj.project_point(&p);
 
                             if let Some(pp) = pp {
                                 if pp.coords.x.abs() <= 1.0
@@ -254,12 +254,18 @@ fn ui_example(
         }
     });
 
+    let mut x1 = Vec::new();
+    let mut y1 = Vec::new();
+    let mut x2 = Vec::new();
+    let mut y2 = Vec::new();
+
     for (camera_id, ((camera, _), points)) in zip(cameras.iter_mut(), rendered_points).enumerate() {
         let width = camera.width;
         let height = camera.height;
         egui::Window::new(format!("Camera {} Image", camera_id))
             .default_size((width, height))
             .show(egui_context.ctx(), |ui| {
+                let (px, py) = if camera_id == 0 { (&mut x1, &mut y1) } else { (&mut x2, &mut y2) };
                 let (response, mut painter) = ui
                     .allocate_painter(ui.available_size_before_wrap_finite(), egui::Sense::drag());
 
@@ -276,6 +282,8 @@ fn ui_example(
                 for point in points {
                     let x = (point.coords.x + 1.0) * width / 2.0;
                     let y = (point.coords.y + 1.0) * height / 2.0;
+                    px.push(x);
+                    py.push(y);
                     painter.add(Shape::circle_filled(
                         left_top + (x, y).into(),
                         4.0,
@@ -283,6 +291,17 @@ fn ui_example(
                     ));
                 }
             });
+    }
+    if x1.len() > 3 && x1.len() == x2.len() {
+        let res = af::homography::<f32>(
+            &af::Array::new(x1.as_slice(), af::Dim4::new(&[x1.len() as u64,1,1,1])),
+            &af::Array::new(y1.as_slice(), af::Dim4::new(&[x1.len() as u64,1,1,1])),
+            &af::Array::new(x2.as_slice(), af::Dim4::new(&[x1.len() as u64,1,1,1])),
+            &af::Array::new(y2.as_slice(), af::Dim4::new(&[x1.len() as u64,1,1,1])),
+            af::HomographyType::RANSAC,
+            3.0,
+            1000,
+        );
     }
 }
 
