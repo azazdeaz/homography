@@ -135,8 +135,6 @@ fn ui_example(
 ) {
     let mut rendered_points = Vec::new();
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
-        ui.label("world");
-
         let mut transforms = Vec::new();
         for (mut plane, _) in planes.iter_mut() {
             ui.collapsing("plane", |ui| {
@@ -196,7 +194,7 @@ fn ui_example(
                     .expect("cant invert projection matrix");
 
                 let mut points = Vec::new();
-                for ((plane, mut mesh), transform) in zip(planes.iter_mut(), &transforms) {
+                for ((plane, mesh), transform) in zip(planes.iter_mut(), &transforms) {
                     let mut vertices = Vec::new();
                     for xi in 0..plane.points_x {
                         for yi in 0..plane.points_y {
@@ -310,7 +308,19 @@ fn ui_example(
             let values = (0..res.total().unwrap() as i32)
                 .map(|i| res.at_mut::<f64>(i).unwrap().clone())
                 .collect_vec();
-            println!("res: {:?}", values);
+
+            egui::Window::new("Result").show(egui_context.ctx(), |ui| {
+                let values = values.iter().map(|v| format!("{:>6.2}", v)).collect_vec();
+                let pretty_lines = vec![&values[0..3], &values[3..6], &values[6..9]]
+                    .iter()
+                    .map(|l| l.join(", "))
+                    .collect_vec()
+                    .join("\n");
+
+                ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+                ui.style_mut().wrap = Some(false);
+                ui.label(pretty_lines);
+            });
         }
     }
 }
