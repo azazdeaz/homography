@@ -15,6 +15,7 @@ use opencv::{
     types::VectorOfPoint2f,
 };
 
+mod homography;
 mod orbit_camera;
 mod utils;
 
@@ -296,7 +297,16 @@ fn ui_example(
             });
     }
     if p_src.len() > 3 && p_src.len() == p_dst.len() {
-        let res = find_homography(
+        let pretty = |values: Vec<f64>| {
+            let values = values.iter().map(|v| format!("{:>6.2}", v)).collect_vec();
+            vec![&values[0..3], &values[3..6], &values[6..9]]
+                .iter()
+                .map(|l| l.join(", "))
+                .collect_vec()
+                .join("\n")
+        };
+
+        let opencv_res = find_homography(
             &p_src.input_array().unwrap(),
             &p_dst.input_array().unwrap(),
             &mut Mat::default(),
@@ -304,24 +314,43 @@ fn ui_example(
             3.,
         );
 
-        if let Ok(mut res) = res {
+        let opencv_res = if let Ok(mut res) = opencv_res {
             let values = (0..res.total().unwrap() as i32)
                 .map(|i| res.at_mut::<f64>(i).unwrap().clone())
                 .collect_vec();
+            pretty(values)
+        } else {
+            "-".to_owned()
+        };
 
-            egui::Window::new("Result").show(egui_context.ctx(), |ui| {
-                let values = values.iter().map(|v| format!("{:>6.2}", v)).collect_vec();
-                let pretty_lines = vec![&values[0..3], &values[3..6], &values[6..9]]
-                    .iter()
-                    .map(|l| l.join(", "))
-                    .collect_vec()
-                    .join("\n");
+        let p_src = p_src
+            .iter()
+            .map(|p| Point2::new(p.x as f64, p.y as f64))
+            .collect_vec();
+        let p_dst = p_dst
+            .iter()
+            .map(|p| Point2::new(p.x as f64, p.y as f64))
+            .collect_vec();
+        let custom_res = homography::run_homography_kernel(p_src, p_dst);
 
-                ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
-                ui.style_mut().wrap = Some(false);
-                ui.label(pretty_lines);
-            });
-        }
+        let custom_res = if let Ok(mut res) = custom_res {
+            let values = res.iter().map(|v| v.to_owned()).collect_vec();
+            pretty(values)
+        } else {
+            "-".to_owned()
+        };
+
+        
+
+        egui::Window::new("Result").show(egui_context.ctx(), |ui| {
+            ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+            ui.style_mut().wrap = Some(false);
+            ui.label("OpenCV findHomography");
+            ui.label(opencv_res);
+
+            ui.label("\n custom test:");
+            ui.label(custom_res);
+        });
     }
 }
 

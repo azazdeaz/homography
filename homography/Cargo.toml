@@ -6,6 +6,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+eyre = "0.6.5"
 opencv = {version = "0.54.0", features = ["clang-runtime"]}
 nalgebra = "0.29.0"
 bevy = "0.5"
