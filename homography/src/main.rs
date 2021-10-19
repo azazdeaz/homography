@@ -84,17 +84,19 @@ fn add_cameras(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for _ in 0..2 {
+    for i in 0..2 {
         let mesh = Mesh::new(PrimitiveTopology::LineList);
         let pbr = PbrBundle {
             mesh: meshes.add(mesh),
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
             ..Default::default()
         };
+        let mut camera = Camera::default();
+        camera.target_x = i as f32 * 0.2;
         commands
             .spawn()
             .insert_bundle(pbr)
-            .insert(Camera::default());
+            .insert(camera);
     }
 }
 
@@ -334,12 +336,19 @@ fn ui_example(
         let custom_res = homography::run_homography_kernel(p_src, p_dst);
 
         let custom_res = if let Ok(mut res) = custom_res {
-            let values = res.iter().map(|v| v.to_owned()).collect_vec();
-            pretty(values)
+            let values = res.transpose().iter().map(|v| v.to_owned()).collect_vec();
+            format!("{}\n\n{}", pretty(values), res)
         } else {
             "-".to_owned()
         };
 
+
+        // println!("OpenCV findHomography");
+        // println!("{}", opencv_res);
+
+        // println!("\n custom test:");
+        // println!("{}", custom_res);
+        // panic!("end");
         
 
         egui::Window::new("Result").show(egui_context.ctx(), |ui| {

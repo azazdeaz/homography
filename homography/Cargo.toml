@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 eyre = "0.6.5"
-opencv = {version = "0.54.0", features = ["clang-runtime"]}
+opencv = {version = "0.55.0", features = ["clang-runtime"]}
 nalgebra = "0.29.0"
 bevy = "0.5"
 bevy_egui = "0.7"
