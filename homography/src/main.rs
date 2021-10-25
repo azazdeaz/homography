@@ -333,7 +333,7 @@ fn ui_example(
             .iter()
             .map(|p| Point2::new(p.x as f64, p.y as f64))
             .collect_vec();
-        let custom_res = homography::run_homography_kernel(p_src, p_dst);
+        let custom_res = homography::run_homography_kernel(p_src.clone(), p_dst.clone());
 
         let custom_res = if let Ok(mut res) = custom_res {
             let values = res.transpose().iter().map(|v| v.to_owned()).collect_vec();
@@ -342,6 +342,8 @@ fn ui_example(
             "-".to_owned()
         };
 
+        
+        let arrsac_h = homography::find_homography(p_src, p_dst);
 
         // println!("OpenCV findHomography");
         // println!("{}", opencv_res);
@@ -359,6 +361,15 @@ fn ui_example(
 
             ui.label("\n custom test:");
             ui.label(custom_res);
+
+
+            ui.label("\n arrsac test:");
+            if let Some(h) = arrsac_h {
+                ui.label(format!("\n{}", h));
+            }
+            else {
+                ui.label("\n ???");
+            }
         });
     }
 }
