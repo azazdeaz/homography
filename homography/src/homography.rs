@@ -26,11 +26,10 @@ impl Model<FeatureMatch<Point2>> for HomographyMatrix {
     fn residual(&self, data: &FeatureMatch<Point2>) -> f64 {
         let Self(mat) = *self;
         let FeatureMatch(a, b) = data;
-        let a = a.to_homogeneous();
-        let b = b.to_homogeneous();
-        // The result is a 1x1 matrix which we must get element 0 from.
-        // println!("residual {}",(a.transpose() * mat * b)[0].abs());
-        (a.transpose() * mat * b)[0].abs()
+        let b2 = Point2::from_homogeneous(mat * a.to_homogeneous());
+        let residual = na::distance_squared(b, &b2.unwrap());
+        println!("residual {}", residual);
+        residual
     }
 }
 
