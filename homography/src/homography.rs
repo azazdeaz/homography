@@ -11,7 +11,7 @@ use rand_pcg::Pcg64;
 use sample_consensus::{Consensus, Estimator, Model};
 
 pub fn find_homography(m1: Vec<Point2>, m2: Vec<Point2>) -> Option<HomographyMatrix> {
-    let mut arrsac = Arrsac::new(1000110.1, Pcg64::from_seed([1; 32]));
+    let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
     let estimator = HomographyEstimator {};
     let matches = zip(m1, m2).map(|(a, b)| FeatureMatch(a, b));
     arrsac.model(&estimator, matches)
@@ -28,7 +28,7 @@ impl Model<FeatureMatch<Point2>> for HomographyMatrix {
         let FeatureMatch(a, b) = data;
         let b2 = Point2::from_homogeneous(mat * a.to_homogeneous());
         let residual = na::distance_squared(b, &b2.unwrap());
-        println!("residual {}", residual);
+        // println!("residual {}", residual);
         residual
     }
 }

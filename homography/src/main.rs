@@ -14,6 +14,7 @@ use opencv::{
     prelude::{Mat, MatTrait, MatTraitConst},
     types::VectorOfPoint2f,
 };
+use rand::Rng;
 
 mod homography;
 mod orbit_camera;
@@ -260,6 +261,7 @@ fn ui_example(
         }
     });
 
+    let mut rng = rand::thread_rng();
     let mut p_src = VectorOfPoint2f::new();
     let mut p_dst = VectorOfPoint2f::new();
 
@@ -283,8 +285,9 @@ fn ui_example(
                 ));
 
                 for point in points {
-                    let x = (point.coords.x + 1.0) * width / 2.0;
-                    let y = (point.coords.y + 1.0) * height / 2.0;
+                    let x = (point.coords.x + 1.0) * width / 2.0 + (rng.gen::<f32>() * 1.0);
+                    let y = (point.coords.y + 1.0) * height / 2.0 + (rng.gen::<f32>() * 1.0);
+
                     if camera_id == 0 {
                         p_src.push(Point2f::new(x, y))
                     } else {
@@ -336,6 +339,16 @@ fn ui_example(
         let custom_res = homography::run_homography_kernel(p_src.clone(), p_dst.clone());
 
         let custom_res = if let Ok(mut res) = custom_res {
+            // println!("{}", res);
+            // for (a, b) in zip(p_src, p_dst) {
+            //     let c_hom = res * a.to_homogeneous();
+            //     let c_cart = Point2::from_homogeneous(c_hom).unwrap();
+            //     let r = na::distance_squared(&b, &c_cart);
+            //     println!("CONVERT {} -> {} = {}", a, b, c_hom);
+            //     println!(" cartesian {}", c_cart);
+            //     println!(" residual = {}",  r);
+
+            // }
             let values = res.transpose().iter().map(|v| v.to_owned()).collect_vec();
             format!("{}\n\n{}", pretty(values), res)
         } else {
