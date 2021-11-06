@@ -19,51 +19,13 @@ use rand::Rng;
 mod homography;
 mod orbit_camera;
 mod utils;
+mod components;
+use components::{Camera, Plane, Landmark2};
+mod update_landmarks;
+mod update_matches;
+mod gui;
 
-struct Camera {
-    width: f32,
-    height: f32,
-    fovy: f32,
-    znear: f32,
-    zfar: f32,
-    x: f32,
-    y: f32,
-    z: f32,
-    target_x: f32,
-    target_y: f32,
-    target_z: f32,
-}
 
-impl Default for Camera {
-    fn default() -> Self {
-        Self {
-            width: 300.0,
-            height: 200.0,
-            fovy: 1.9,
-            znear: 1.0,
-            zfar: 100.0,
-            x: 0.0,
-            y: 0.0,
-            z: 1.0,
-            target_x: 0.0,
-            target_y: 0.0,
-            target_z: 0.0,
-        }
-    }
-}
-
-struct Plane {
-    points_x: u32,
-    points_y: u32,
-    width: f32,
-    height: f32,
-    x: f32,
-    y: f32,
-    z: f32,
-    rot_x: f32,
-    rot_y: f32,
-    rot_z: f32,
-}
 
 fn main() {
     App::build()
@@ -76,6 +38,9 @@ fn main() {
         .add_startup_system(orbit_camera::spawn_camera.system())
         .add_system(orbit_camera::pan_orbit_camera.system())
         .add_system(ui_example.system())
+        .add_system(update_landmarks::update_landmarks.system())
+        .add_system(update_matches::render_landmarks.system())
+        .add_system(gui::render_gui.system())
         .add_system(utils::inspect.system())
         .run();
 }
@@ -97,7 +62,8 @@ fn add_cameras(
         commands
             .spawn()
             .insert_bundle(pbr)
-            .insert(camera);
+            .insert(camera)
+            .insert(Vec::<Landmark2>::default());
     }
 }
 
@@ -107,6 +73,7 @@ fn add_points(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let plane = Plane {
+        id: 1,
         width: 10.0,
         height: 10.0,
         points_x: 5,
@@ -138,34 +105,34 @@ fn ui_example(
     mut cameras: Query<(&mut Camera, &Handle<Mesh>)>,
 ) {
     let mut rendered_points = Vec::new();
-    egui::Window::new("Items").show(egui_context.ctx(), |ui| {
+    egui::Window::new("Items-").show(egui_context.ctx(), |ui| {
         let mut transforms = Vec::new();
         for (mut plane, _) in planes.iter_mut() {
-            ui.collapsing("plane", |ui| {
-                ui.add(egui::Slider::new(&mut plane.x, -100.0..=100.0).text("x"));
-                ui.add(egui::Slider::new(&mut plane.y, -100.0..=100.0).text("y"));
-                ui.add(egui::Slider::new(&mut plane.z, -100.0..=100.0).text("z"));
-                ui.add(egui::Slider::new(&mut plane.rot_x, -3.14..=3.14).text("rot_x"));
-                ui.add(egui::Slider::new(&mut plane.rot_y, -3.14..=3.14).text("rot_y"));
-                ui.add(egui::Slider::new(&mut plane.rot_z, -3.14..=3.14).text("rot_z"));
-            });
+            // ui.collapsing("plane", |ui| {
+            //     ui.add(egui::Slider::new(&mut plane.x, -100.0..=100.0).text("x"));
+            //     ui.add(egui::Slider::new(&mut plane.y, -100.0..=100.0).text("y"));
+            //     ui.add(egui::Slider::new(&mut plane.z, -100.0..=100.0).text("z"));
+            //     ui.add(egui::Slider::new(&mut plane.rot_x, -3.14..=3.14).text("rot_x"));
+            //     ui.add(egui::Slider::new(&mut plane.rot_y, -3.14..=3.14).text("rot_y"));
+            //     ui.add(egui::Slider::new(&mut plane.rot_z, -3.14..=3.14).text("rot_z"));
+            // });
             let axisangle = Vector3::y() * plane.rot_y;
             let translation = Vector3::new(plane.x, plane.y, plane.z);
             let transform = Isometry3::new(translation, axisangle);
             transforms.push(transform);
         }
         for (camera_id, (mut camera, mut camera_mesh)) in cameras.iter_mut().enumerate() {
-            ui.collapsing(format!("camera {}", camera_id), |ui| {
-                ui.add(egui::Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
-                ui.add(egui::Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
-                ui.add(egui::Slider::new(&mut camera.fovy, (3.14 / 8.0)..=3.14).text("fovy"));
-                ui.add(egui::Slider::new(&mut camera.x, -100.0..=100.0).text("x"));
-                ui.add(egui::Slider::new(&mut camera.y, -100.0..=100.0).text("y"));
-                ui.add(egui::Slider::new(&mut camera.z, -100.0..=100.0).text("z"));
-                ui.add(egui::Slider::new(&mut camera.target_x, -100.0..=100.0).text("target_x"));
-                ui.add(egui::Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
-                ui.add(egui::Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
-            });
+            // ui.collapsing(format!("camera {}", camera_id), |ui| {
+            //     ui.add(egui::Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
+            //     ui.add(egui::Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
+            //     ui.add(egui::Slider::new(&mut camera.fovy, (3.14 / 8.0)..=3.14).text("fovy"));
+            //     ui.add(egui::Slider::new(&mut camera.x, -100.0..=100.0).text("x"));
+            //     ui.add(egui::Slider::new(&mut camera.y, -100.0..=100.0).text("y"));
+            //     ui.add(egui::Slider::new(&mut camera.z, -100.0..=100.0).text("z"));
+            //     ui.add(egui::Slider::new(&mut camera.target_x, -100.0..=100.0).text("target_x"));
+            //     ui.add(egui::Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
+            //     ui.add(egui::Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
+            // });
 
             let points = {
                 let model = Isometry3::new(Vector3::x(), na::zero());
@@ -268,7 +235,7 @@ fn ui_example(
     for (camera_id, ((camera, _), points)) in zip(cameras.iter_mut(), rendered_points).enumerate() {
         let width = camera.width;
         let height = camera.height;
-        egui::Window::new(format!("Camera {} Image", camera_id))
+        egui::Window::new(format!("Camera {} Image-", camera_id))
             .default_size((width, height))
             .show(egui_context.ctx(), |ui| {
                 let (response, mut painter) = ui
@@ -356,7 +323,7 @@ fn ui_example(
         };
 
         
-        let arrsac_h = homography::find_homography(p_src, p_dst);
+        // let arrsac_h = homography::find_homography(p_src, p_dst);
 
         // println!("OpenCV findHomography");
         // println!("{}", opencv_res);
@@ -376,13 +343,13 @@ fn ui_example(
             ui.label(custom_res);
 
 
-            ui.label("\n arrsac test:");
-            if let Some(h) = arrsac_h {
-                ui.label(format!("\n{}", h));
-            }
-            else {
-                ui.label("\n ???");
-            }
+            // ui.label("\n arrsac test:");
+            // if let Some(h) = arrsac_h {
+            //     ui.label(format!("\n{}", h));
+            // }
+            // else {
+            //     ui.label("\n ???");
+            // }
         });
     }
 }
