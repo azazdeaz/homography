@@ -16,19 +16,19 @@ use opencv::{
 };
 use rand::Rng;
 
+mod components;
 mod homography;
 mod orbit_camera;
 mod utils;
-mod components;
-use components::{Camera, Plane, Landmark2};
+use components::{Camera, Landmark2, MatchEvent, Plane};
+mod gui;
 mod update_landmarks;
 mod update_matches;
-mod gui;
-
-
+mod estimators;
 
 fn main() {
     App::build()
+        .add_event::<MatchEvent>()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
@@ -39,7 +39,12 @@ fn main() {
         .add_system(orbit_camera::pan_orbit_camera.system())
         .add_system(ui_example.system())
         .add_system(update_landmarks::update_landmarks.system())
-        .add_system(update_matches::render_landmarks.system())
+        .add_system(
+            update_matches::render_landmarks
+                .system()
+                .chain(update_matches::update_matches.system()),
+        )
+        .add_system(estimators::estimate_homography_with_arrsac.system())
         .add_system(gui::render_gui.system())
         .add_system(utils::inspect.system())
         .run();
@@ -322,8 +327,7 @@ fn ui_example(
             "-".to_owned()
         };
 
-        
-        // let arrsac_h = homography::find_homography(p_src, p_dst);
+        // let arrsac_h = homography::find_homography_(p_src, p_dst);
 
         // println!("OpenCV findHomography");
         // println!("{}", opencv_res);
@@ -331,9 +335,8 @@ fn ui_example(
         // println!("\n custom test:");
         // println!("{}", custom_res);
         // panic!("end");
-        
 
-        egui::Window::new("Result").show(egui_context.ctx(), |ui| {
+        egui::Window::new("_Result").show(egui_context.ctx(), |ui| {
             ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
             ui.style_mut().wrap = Some(false);
             ui.label("OpenCV findHomography");
@@ -341,7 +344,6 @@ fn ui_example(
 
             ui.label("\n custom test:");
             ui.label(custom_res);
-
 
             // ui.label("\n arrsac test:");
             // if let Some(h) = arrsac_h {

@@ -1,3 +1,4 @@
+use cv_core::FeatureMatch;
 use nalgebra as na;
 pub struct Camera {
     pub width: f32,
@@ -35,6 +36,7 @@ pub struct Landmark2 {
     pub id: String,
     pub point: na::Point2<f32>,
 }
+pub type Landmarks2 = Vec<Landmark2>;
 
 pub struct Landmark3 {
     pub id: String,
@@ -55,3 +57,7 @@ pub struct Plane {
     pub rot_y: f32,
     pub rot_z: f32,
 }
+
+pub struct MatchEvent(pub Vec<FeatureMatch<na::Point2<f64>>>);
+
+pub type EstimationMethod = String;

@@ -1,10 +1,11 @@
-use crate::components::{Camera, Landmarks3};
+use crate::components::{Camera, Landmark2, Landmarks2, Landmarks3, MatchEvent};
 use bevy::prelude::*;
+use cv_core::FeatureMatch;
 use itertools::Itertools;
 use nalgebra::{self as na, Isometry3, Perspective3, Point2, Point3, Vector3};
 use rand::Rng;
 
-fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Vec<Point2<f32>> {
+fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
     let mut rng = rand::thread_rng();
     let model = Isometry3::new(Vector3::x(), na::zero());
 
@@ -46,7 +47,10 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Vec<Point2<f32>> {
                 {
                     let x = (point.coords.x + 1.0) * camera.width / 2.0 + (rng.gen::<f32>() * 1.0);
                     let y = (point.coords.y + 1.0) * camera.height / 2.0 + (rng.gen::<f32>() * 1.0);
-                    return Some(Point2::new(x, y));
+                    return Some(Landmark2 {
+                        id: lm.id.clone(),
+                        point: Point2::new(x, y),
+                    });
                 }
             }
             None
@@ -56,7 +60,7 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Vec<Point2<f32>> {
 
 pub fn render_landmarks(
     mut commands: Commands,
-    mut cameras: Query<(&Camera, Option<&mut Vec<na::Point2<f32>>>, Entity)>,
+    mut cameras: Query<(&Camera, Option<&mut Landmarks2>, Entity)>,
     mut landmarks: Query<&Landmarks3>,
 ) {
     if let (Ok(mut landmarks), Some((mut cam1, mut cam2))) =
@@ -74,5 +78,26 @@ pub fn render_landmarks(
         } else {
             commands.entity(cam2.2).insert(points2);
         }
+    }
+}
+
+pub fn update_matches(
+    mut cameras: Query<(&Camera, &Landmarks2)>,
+    mut ev_matches: EventWriter<MatchEvent>,
+) {
+    if let Some((cam1, cam2)) = cameras.iter().collect_tuple() {
+        let landmarks2 = cam2.1;
+        let matches = cam1
+            .1
+            .iter()
+            .filter_map(|lm1| {
+                if let Some(lm2) = landmarks2.iter().find(|lm2| lm2.id == lm1.id) {
+                    Some(FeatureMatch(lm1.point.cast::<f64>(), lm2.point.cast::<f64>()))
+                } else {
+                    None
+                }
+            })
+            .collect_vec();
+        ev_matches.send(MatchEvent(matches));
     }
 }

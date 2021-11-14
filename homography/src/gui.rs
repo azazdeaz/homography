@@ -1,15 +1,19 @@
+use crate::{
+    components::{Camera, Landmarks2, Plane},
+    estimators::ArrsacEstimation,
+    homography::HomographyMatrix,
+};
 use bevy::prelude::*;
 use bevy_egui::{
     egui::{self, pos2, Color32, Rect, Shape, Slider},
     EguiContext, EguiPlugin,
 };
-use crate::components::{Camera, Plane};
-use nalgebra::{self as na, Isometry3, Point3, Point2, Vector3, Perspective3};
 
 pub fn render_gui(
     egui_context: ResMut<EguiContext>,
     mut planes: Query<&mut Plane>,
-    mut cameras: Query<(&mut Camera, &Vec<na::Point2<f32>>)>
+    mut cameras: Query<(&mut Camera, &Landmarks2)>,
+    mut result: Query<&Option<HomographyMatrix>, With<ArrsacEstimation>>,
 ) {
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
         for mut plane in planes.iter_mut() {
@@ -22,7 +26,7 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut plane.rot_z, -3.14..=3.14).text("rot_z"));
             });
         }
-        for (camera_id, (mut camera, mut points)) in cameras.iter_mut().enumerate() {
+        for (camera_id, (mut camera, mut landmarks)) in cameras.iter_mut().enumerate() {
             ui.collapsing(format!("camera {}", camera_id), |ui| {
                 ui.add(Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
                 ui.add(Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
@@ -35,15 +39,16 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
             });
 
-
             let width = camera.width;
             let height = camera.height;
             egui::Window::new(format!("Camera {} Image", camera_id))
                 .default_size((width, height))
                 .show(egui_context.ctx(), |ui| {
-                    let (response, mut painter) = ui
-                        .allocate_painter(ui.available_size_before_wrap_finite(), egui::Sense::drag());
-    
+                    let (response, mut painter) = ui.allocate_painter(
+                        ui.available_size_before_wrap_finite(),
+                        egui::Sense::drag(),
+                    );
+
                     let left_top = response.rect.left_top();
                     ui.expand_to_include_rect(painter.clip_rect());
                     painter.add(Shape::closed_line(
@@ -53,16 +58,28 @@ pub fn render_gui(
                             .collect::<Vec<_>>(),
                         (4.0, Color32::RED),
                     ));
-    
-                    for point in points {
-    
+
+                    for lm in landmarks {
                         painter.add(Shape::circle_filled(
-                            left_top + (point.coords.x, point.coords.y).into(),
+                            left_top + (lm.point.coords.x, lm.point.coords.y).into(),
                             4.0,
                             Color32::LIGHT_GRAY,
                         ));
                     }
                 });
+
+            egui::Window::new("Result").show(egui_context.ctx(), |ui| {
+                if let Ok(h) = result.single() {
+                    ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
+                    ui.style_mut().wrap = Some(false);
+                    ui.label("Result");
+                    if let Some(h) = h {
+                        ui.label(format!("{}", h));
+                    } else {
+                        ui.label("no solution");
+                    }
+                }
+            });
         }
     });
 }

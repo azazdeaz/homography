@@ -10,11 +10,18 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use sample_consensus::{Consensus, Estimator, Model};
 
-pub fn find_homography(m1: Vec<Point2>, m2: Vec<Point2>) -> Option<HomographyMatrix> {
+pub fn find_homography_(m1: Vec<Point2>, m2: Vec<Point2>) -> Option<HomographyMatrix> {
     let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
     let estimator = HomographyEstimator {};
     let matches = zip(m1, m2).map(|(a, b)| FeatureMatch(a, b));
     arrsac.model(&estimator, matches)
+}
+
+pub fn find_homography(matches: &Vec<FeatureMatch<Point2>>) -> Option<HomographyMatrix> {
+    let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
+    let estimator = HomographyEstimator {};
+    // TODO shuffle matches?
+    arrsac.model(&estimator, matches.iter().cloned())
 }
 
 #[derive(
