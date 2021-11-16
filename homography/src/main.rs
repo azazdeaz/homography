@@ -45,6 +45,7 @@ fn main() {
                 .chain(update_matches::update_matches.system()),
         )
         .add_system(estimators::estimate_homography_with_arrsac.system())
+        .add_system(estimators::estimate_homography_with_opencv.system())
         .add_system(gui::render_gui.system())
         .add_system(utils::inspect.system())
         .run();

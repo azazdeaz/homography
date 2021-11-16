@@ -1,6 +1,6 @@
 use crate::{
     components::{Camera, Landmarks2, Plane},
-    estimators::ArrsacEstimation,
+    estimators::EstimationLabel,
     homography::HomographyMatrix,
 };
 use bevy::prelude::*;
@@ -13,7 +13,7 @@ pub fn render_gui(
     egui_context: ResMut<EguiContext>,
     mut planes: Query<&mut Plane>,
     mut cameras: Query<(&mut Camera, &Landmarks2)>,
-    mut result: Query<&Option<HomographyMatrix>, With<ArrsacEstimation>>,
+    mut results: Query<(&Option<HomographyMatrix>, &EstimationLabel)>,
 ) {
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
         for mut plane in planes.iter_mut() {
@@ -67,9 +67,10 @@ pub fn render_gui(
                         ));
                     }
                 });
-
-            egui::Window::new("Result").show(egui_context.ctx(), |ui| {
-                if let Ok(h) = result.single() {
+            
+            for (h, label) in results.iter(){
+            egui::Window::new(label).show(egui_context.ctx(), |ui| {
+ 
                     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
                     ui.style_mut().wrap = Some(false);
                     ui.label("Result");
@@ -78,8 +79,7 @@ pub fn render_gui(
                     } else {
                         ui.label("no solution");
                     }
-                }
-            });
+            });}
         }
     });
 }
