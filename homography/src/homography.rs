@@ -10,13 +10,6 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use sample_consensus::{Consensus, Estimator, Model};
 
-pub fn find_homography_(m1: Vec<Point2>, m2: Vec<Point2>) -> Option<HomographyMatrix> {
-    let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
-    let estimator = HomographyEstimator {};
-    let matches = zip(m1, m2).map(|(a, b)| FeatureMatch(a, b));
-    arrsac.model(&estimator, matches)
-}
-
 pub fn find_homography(matches: &Vec<FeatureMatch<Point2>>) -> Option<HomographyMatrix> {
     let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
     let estimator = HomographyEstimator {};
@@ -52,15 +45,8 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
         I: Iterator<Item = FeatureMatch<Point2>> + Clone,
     {
         let matches = data.take(Self::MIN_SAMPLES).collect_vec();
-        let m1 = matches
-            .iter()
-            .map(|FeatureMatch(a, _)| a.clone())
-            .collect_vec();
-        let m2 = matches
-            .iter()
-            .map(|FeatureMatch(_, b)| b.clone())
-            .collect_vec();
-        if let Ok(homography_matrix) = run_homography_kernel(m1, m2) {
+
+        if let Ok(homography_matrix) = run_homography_kernel(matches) {
             Some(HomographyMatrix(homography_matrix))
         } else {
             None
@@ -68,13 +54,8 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
     }
 }
 
-pub fn run_homography_kernel(m1: Vec<Point2>, m2: Vec<Point2>) -> Result<Matrix3<f64>> {
-    assert!(m1.len() == m2.len());
-
-    // println!("\n\n=============================test==");
-
-    // println!("m1 {:?}", m1);
-    // println!("m2 {:?}", m2);
+pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64>> {
+    let (m1, m2): (Vec<_>, Vec<_>) = matches.iter().map(|m| (m.0, m.1)).unzip();
 
     let count = m1.len();
     let mut cm = Point2::origin();

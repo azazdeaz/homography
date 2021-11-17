@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::{
     components::{Camera, Landmarks2, Plane},
     estimators::EstimationLabel,
@@ -14,7 +16,7 @@ pub fn render_gui(
     egui_context: ResMut<EguiContext>,
     mut planes: Query<&mut Plane>,
     mut cameras: Query<(&mut Camera, &Landmarks2)>,
-    mut results: Query<(&Option<HomographyMatrix>, &EstimationLabel)>,
+    mut results: Query<(&Option<HomographyMatrix>, &EstimationLabel, Option<&Duration>)>,
 ) {
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
         for mut plane in planes.iter_mut() {
@@ -69,11 +71,14 @@ pub fn render_gui(
                     }
                 });
             
-            for (h, label) in results.iter(){
+            for (h, label, time) in results.iter(){
             egui::Window::new(label).show(egui_context.ctx(), |ui| {
                     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
                     ui.style_mut().wrap = Some(false);
-                    ui.label("Result");
+                    if let Some(time) = time {
+
+                    ui.label(format!("Time {:?}", time));
+                    }
                     if let Some(h) = h {
                         ui.label(pretty_hmat(h));
                     } else {
