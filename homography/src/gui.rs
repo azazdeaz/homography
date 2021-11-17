@@ -8,6 +8,7 @@ use bevy_egui::{
     egui::{self, pos2, Color32, Rect, Shape, Slider},
     EguiContext, EguiPlugin,
 };
+use itertools::Itertools;
 
 pub fn render_gui(
     egui_context: ResMut<EguiContext>,
@@ -70,16 +71,24 @@ pub fn render_gui(
             
             for (h, label) in results.iter(){
             egui::Window::new(label).show(egui_context.ctx(), |ui| {
- 
                     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
                     ui.style_mut().wrap = Some(false);
                     ui.label("Result");
                     if let Some(h) = h {
-                        ui.label(format!("{}", h));
+                        ui.label(pretty_hmat(h));
                     } else {
                         ui.label("no solution");
                     }
             });}
         }
     });
+}
+
+fn pretty_hmat(h: &HomographyMatrix) -> String {
+    let values = h.iter().map(|v| format!("{:>12.4}", v)).collect_vec();
+    vec![&values[0..3], &values[3..6], &values[6..9]]
+        .iter()
+        .map(|l| l.join(", "))
+        .collect_vec()
+        .join("\n")
 }
