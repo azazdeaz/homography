@@ -4,9 +4,12 @@ use cv_core::FeatureMatch;
 use itertools::Itertools;
 use nalgebra::{self as na, Isometry3, Perspective3, Point2, Point3, Vector3};
 use rand::Rng;
+use rand_distr::{Normal, Distribution};
 
 fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
     let mut rng = rand::thread_rng();
+    let noise = Normal::new(0.0, camera.noise).unwrap();
+    let outlier_noise = Normal::new(0.0, camera.outlier_noise).unwrap();
     let model = Isometry3::new(Vector3::x(), na::zero());
 
     // Our camera looks toward the point (1.0, 0.0, 0.0).
@@ -45,8 +48,16 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
                     && point.coords.y.abs() <= 1.0
                     && point.coords.z.abs() <= 1.0
                 {
-                    let x = (point.coords.x + 1.0) * camera.width / 2.0 + (rng.gen::<f32>() * 1.0);
-                    let y = (point.coords.y + 1.0) * camera.height / 2.0 + (rng.gen::<f32>() * 1.0);
+                    let mut x = (point.coords.x + 1.0) * camera.width / 2.0;
+                    let mut y = (point.coords.y + 1.0) * camera.height / 2.0 ;
+                    if rng.gen::<f32>() > camera.outlier_proportion {
+                        x += noise.sample(&mut rng);
+                        y += noise.sample(&mut rng);
+                    }
+                    else {
+                        x += outlier_noise.sample(&mut rng);
+                        y += outlier_noise.sample(&mut rng);
+                    }
                     return Some(Landmark2 {
                         id: lm.id.clone(),
                         point: Point2::new(x, y),

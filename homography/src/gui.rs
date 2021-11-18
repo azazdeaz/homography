@@ -27,6 +27,8 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut plane.rot_x, -3.14..=3.14).text("rot_x"));
                 ui.add(Slider::new(&mut plane.rot_y, -3.14..=3.14).text("rot_y"));
                 ui.add(Slider::new(&mut plane.rot_z, -3.14..=3.14).text("rot_z"));
+                ui.add(Slider::new(&mut plane.points_x, 0..=50).text("points_x"));
+                ui.add(Slider::new(&mut plane.points_y, 0..=50).text("points_y"));
             });
         }
         for (camera_id, (mut camera, mut landmarks)) in cameras.iter_mut().enumerate() {
@@ -40,6 +42,9 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut camera.target_x, -100.0..=100.0).text("target_x"));
                 ui.add(Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
                 ui.add(Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
+                ui.add(Slider::new(&mut camera.noise, 0.0..=50.0).text("noise"));
+                ui.add(Slider::new(&mut camera.outlier_proportion, 0.0..=1.0).text("outlier_proportion"));
+                ui.add(Slider::new(&mut camera.outlier_noise, 0.0..=50.0).text("outlier_noise"));
             });
 
             let width = camera.width;

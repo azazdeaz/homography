@@ -12,6 +12,9 @@ pub struct Camera {
     pub target_x: f32,
     pub target_y: f32,
     pub target_z: f32,
+    pub noise: f32,
+    pub outlier_proportion: f32,
+    pub outlier_noise: f32,
 }
 
 impl Default for Camera {
@@ -28,6 +31,9 @@ impl Default for Camera {
             target_x: 0.0,
             target_y: 0.0,
             target_z: 0.0,
+            noise: 1.0,
+            outlier_proportion: 0.1,
+            outlier_noise: 12.0,
         }
     }
 }

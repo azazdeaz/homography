@@ -38,14 +38,13 @@ pub struct HomographyEstimator {}
 impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
     type Model = HomographyMatrix;
     type ModelIter = Option<HomographyMatrix>;
-    const MIN_SAMPLES: usize = 8;
+    const MIN_SAMPLES: usize = 4;
 
     fn estimate<I>(&self, data: I) -> Self::ModelIter
     where
         I: Iterator<Item = FeatureMatch<Point2>> + Clone,
     {
         let matches = data.take(Self::MIN_SAMPLES).collect_vec();
-
         if let Ok(homography_matrix) = run_homography_kernel(matches) {
             Some(HomographyMatrix(homography_matrix))
         } else {
@@ -55,6 +54,7 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
 }
 
 pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64>> {
+    // TODO detect degenerate cases
     let (m1, m2): (Vec<_>, Vec<_>) = matches.iter().map(|m| (m.0, m.1)).unzip();
 
     let count = m1.len();
