@@ -1,6 +1,6 @@
 use cv_core::FeatureMatch;
 use eyre::{eyre, Result};
-use itertools::{Itertools};
+use itertools::Itertools;
 use na::Const;
 use nalgebra::{self as na, Matrix3, SMatrix};
 type Point2 = na::Point2<f64>;
@@ -151,13 +151,48 @@ pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matri
     // println!("scaled {}", res);
     Ok(res)
 }
-// TODO reimplement tests from https://github.com/opencv/opencv/blob/4.x/modules/calib3d/test/test_homography.cpp   
+// TODO reimplement tests from https://github.com/opencv/opencv/blob/4.x/modules/calib3d/test/test_homography.cpp
 
 #[cfg(test)]
 mod tests {
+    use crate::{HomographyMatrix, homography::Point2, run_homography_kernel};
+    use cv_core::FeatureMatch;
+    use itertools::{zip, Itertools};
+    use nalgebra::Matrix3;
+    use rand::Rng;
+    use std::f64::consts::PI;
+
     #[test]
     fn it_works() {
-
+        let img_size = 100.0;
+        let mut rng = rand::thread_rng();
+        let src = (0..100)
+            .map(|_| {
+                Point2::new(rng.gen_range(0.0..img_size), rng.gen_range(0.0..img_size))
+                    .to_homogeneous()
+            })
+            .collect_vec();
+        let fi = rng.gen_range(0.0..PI * 2.0);
+        let tx = rng.gen_range(0.0..f64::sqrt(img_size));
+        let ty = rng.gen_range(0.0..f64::sqrt(img_size));
+        #[rustfmt::skip]
+        let h_src = Matrix3::new(
+            f64::cos(fi), -f64::sin(fi), tx,
+            f64::sin(fi), f64::cos(fi), ty,
+            0.0, 0.0, 1.0
+        );
+        let dst = src.iter().map(|p| h_src * p).collect_vec();
+        let matches = zip(src, dst)
+            .map(|(a, b)| {
+                FeatureMatch(
+                    Point2::from_homogeneous(a).unwrap(),
+                    Point2::from_homogeneous(b).unwrap(),
+                )
+            })
+            .collect_vec();
+        let h= run_homography_kernel(matches).unwrap();
+        // TODO implement cvtest::norm from opencv modules/ts/src/ts_func.cpp
+        assert_eq!(h_src, h);
         assert_eq!(2 + 2, 4);
     }
 }
