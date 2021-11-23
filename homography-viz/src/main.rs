@@ -17,7 +17,6 @@ use opencv::{
 use rand::Rng;
 
 mod components;
-mod homography;
 mod orbit_camera;
 mod utils;
 use components::{Camera, Landmark2, MatchEvent, Plane};

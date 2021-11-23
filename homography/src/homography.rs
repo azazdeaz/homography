@@ -1,6 +1,6 @@
 use cv_core::FeatureMatch;
 use eyre::{eyre, Result};
-use itertools::{zip, Itertools};
+use itertools::{Itertools};
 use na::Const;
 use nalgebra::{self as na, Matrix3, SMatrix};
 type Point2 = na::Point2<f64>;
@@ -141,21 +141,6 @@ pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matri
         .reshape_generic(Const::<3>, Const::<3>)
         .transpose();
 
-    // println!("eigen.eigenvectors {}", eigen.eigenvectors);
-    // println!("eigen.eigenvalues {}", eigen.eigenvalues);
-    // println!("H0 m- {}", H0);
-    // let H0 = H0.resize(3, 3, 0.0);
-    // let H0 = Matrix3::new(
-    //     eigen.eigenvectors[(0, 2)],
-    //     eigen.eigenvectors[(1, 2)],
-    //     eigen.eigenvectors[(2, 2)],
-    //     eigen.eigenvectors[(3, 2)],
-    //     eigen.eigenvectors[(4, 2)],
-    //     eigen.eigenvectors[(5, 2)],
-    //     eigen.eigenvectors[(6, 2)],
-    //     eigen.eigenvectors[(7, 2)],
-    //     eigen.eigenvectors[(8, 2)],
-    // );
     // println!("H0 m {}", H0);
     let Htemp = invHnorm * H0;
     // println!("Htemp {}", Htemp);
@@ -165,4 +150,14 @@ pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matri
 
     // println!("scaled {}", res);
     Ok(res)
+}
+// TODO reimplement tests from https://github.com/opencv/opencv/blob/4.x/modules/calib3d/test/test_homography.cpp   
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+
+        assert_eq!(2 + 2, 4);
+    }
 }
