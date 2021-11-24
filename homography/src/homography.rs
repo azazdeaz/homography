@@ -156,6 +156,7 @@ pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matri
 #[cfg(test)]
 mod tests {
     use crate::{HomographyMatrix, homography::Point2, run_homography_kernel};
+    use approx::AbsDiffEq;
     use cv_core::FeatureMatch;
     use itertools::{zip, Itertools};
     use nalgebra::Matrix3;
@@ -192,7 +193,9 @@ mod tests {
             .collect_vec();
         let h= run_homography_kernel(matches).unwrap();
         // TODO implement cvtest::norm from opencv modules/ts/src/ts_func.cpp
-        assert_eq!(h_src, h);
-        assert_eq!(2 + 2, 4);
+        
+        let max_diff = 0.000001;
+        assert!(h_src.abs_diff_eq(&h, max_diff), "absolute difference is too large");
+        assert!((h_src - h).norm() < max_diff, "L2 norm is too large");
     }
 }
