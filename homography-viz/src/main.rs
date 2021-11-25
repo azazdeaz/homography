@@ -24,19 +24,21 @@ mod gui;
 mod update_landmarks;
 mod update_matches;
 mod estimators;
+mod visuals_3d;
 
 fn main() {
     App::build()
         .add_event::<MatchEvent>()
-        .insert_resource(Msaa { samples: 4 })
+        // .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
-        .add_startup_system(add_points.system())
-        .add_startup_system(add_cameras.system())
+        .add_plugin(visuals_3d::CamerasAndPlanes3D)
+        // .add_startup_system(add_planes.system())
+        // .add_startup_system(add_cameras.system())
         .add_startup_system(setup_3d.system())
         .add_startup_system(orbit_camera::spawn_camera.system())
         .add_system(orbit_camera::pan_orbit_camera.system())
-        .add_system(ui_example.system())
+        // // .add_system(ui_example.system())
         .add_system(update_landmarks::update_landmarks.system())
         .add_system(
             update_matches::render_landmarks
@@ -57,7 +59,8 @@ fn add_cameras(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for i in 0..2 {
-        let mesh = Mesh::new(PrimitiveTopology::LineList);
+        let mut mesh = Mesh::new(PrimitiveTopology::LineList);
+        fill_mesh_with_vertices(&mut mesh, Vec::default());
         let pbr = PbrBundle {
             mesh: meshes.add(mesh),
             material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
@@ -73,7 +76,7 @@ fn add_cameras(
     }
 }
 
-fn add_points(
+fn add_planes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -92,7 +95,8 @@ fn add_points(
         rot_z: 0.0,
     };
 
-    let mesh = Mesh::new(PrimitiveTopology::LineStrip);
+    let mut mesh = Mesh::new(PrimitiveTopology::LineStrip);
+    fill_mesh_with_vertices(&mut mesh, Vec::default());
     let pbr = PbrBundle {
         mesh: meshes.add(mesh),
         material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
@@ -274,87 +278,6 @@ fn ui_example(
                 }
             });
     }
-    if p_src.len() > 3 && p_src.len() == p_dst.len() {
-        // let pretty = |values: Vec<f64>| {
-        //     let values = values.iter().map(|v| format!("{:>6.2}", v)).collect_vec();
-        //     vec![&values[0..3], &values[3..6], &values[6..9]]
-        //         .iter()
-        //         .map(|l| l.join(", "))
-        //         .collect_vec()
-        //         .join("\n")
-        // };
-
-        // let opencv_res = find_homography(
-        //     &p_src.input_array().unwrap(),
-        //     &p_dst.input_array().unwrap(),
-        //     &mut Mat::default(),
-        //     0,
-        //     3.,
-        // );
-
-        // let opencv_res = if let Ok(mut res) = opencv_res {
-        //     let values = (0..res.total().unwrap() as i32)
-        //         .map(|i| res.at_mut::<f64>(i).unwrap().clone())
-        //         .collect_vec();
-        //     pretty(values)
-        // } else {
-        //     "-".to_owned()
-        // };
-
-        // let p_src = p_src
-        //     .iter()
-        //     .map(|p| Point2::new(p.x as f64, p.y as f64))
-        //     .collect_vec();
-        // let p_dst = p_dst
-        //     .iter()
-        //     .map(|p| Point2::new(p.x as f64, p.y as f64))
-        //     .collect_vec();
-        // let custom_res = homography::run_homography_kernel(p_src.clone(), p_dst.clone());
-
-        // let custom_res = if let Ok(mut res) = custom_res {
-        //     // println!("{}", res);
-        //     // for (a, b) in zip(p_src, p_dst) {
-        //     //     let c_hom = res * a.to_homogeneous();
-        //     //     let c_cart = Point2::from_homogeneous(c_hom).unwrap();
-        //     //     let r = na::distance_squared(&b, &c_cart);
-        //     //     println!("CONVERT {} -> {} = {}", a, b, c_hom);
-        //     //     println!(" cartesian {}", c_cart);
-        //     //     println!(" residual = {}",  r);
-
-        //     // }
-        //     let values = res.transpose().iter().map(|v| v.to_owned()).collect_vec();
-        //     format!("{}\n\n{}", pretty(values), res)
-        // } else {
-        //     "-".to_owned()
-        // };
-
-        // let arrsac_h = homography::find_homography_(p_src, p_dst);
-
-        // println!("OpenCV findHomography");
-        // println!("{}", opencv_res);
-
-        // println!("\n custom test:");
-        // println!("{}", custom_res);
-        // panic!("end");
-
-        // egui::Window::new("_Result").show(egui_context.ctx(), |ui| {
-        //     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
-        //     ui.style_mut().wrap = Some(false);
-        //     ui.label("OpenCV findHomography");
-        //     ui.label(opencv_res);
-
-        //     ui.label("\n custom test:");
-        //     ui.label(custom_res);
-
-        //     // ui.label("\n arrsac test:");
-        //     // if let Some(h) = arrsac_h {
-        //     //     ui.label(format!("\n{}", h));
-        //     // }
-        //     // else {
-        //     //     ui.label("\n ???");
-        //     // }
-        // });
-    }
 }
 
 fn fill_mesh_with_vertices(mesh: &mut Mesh, vertices: Vec<[f32; 3]>) {
@@ -376,23 +299,6 @@ fn setup_3d(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // // cube
-    // commands.spawn_bundle(PbrBundle {
-    //     mesh: meshes.add(Mesh::from(shape::Cube { size: 2.0 })),
-    //     material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-    //     ..Default::default()
-    // });
-    // // light
-    // commands.spawn_bundle(LightBundle {
-    //     transform: Transform::from_xyz(4.0, 8.0, 4.0),
-    //     ..Default::default()
-    // });
-    // // camera
-    // commands.spawn_bundle(PerspectiveCameraBundle {
-    //     transform: Transform::from_xyz(-3.0, 3.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-    //     ..Default::default()
-    // });
-
     let vertices = [
         ([0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0]),
         ([1.0, 2.0, 1.0], [0.0, 1.0, 0.0], [1.0, 1.0]),

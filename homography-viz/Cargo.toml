@@ -26,9 +26,5 @@ futures-lite = "1.12.0"
 
 
 [[bin]]
-name = "main"
+name = "demo"
 path = "src/main.rs"
-
-[[bin]]
-name = "test_proj"
-path = "src/test_proj.rs"

@@ -1,3 +1,5 @@
+// From https://bevy-cheatbook.github.io/cookbook/pan-orbit-camera.html
+
 /// Tags an entity as capable of panning and orbiting.
 use bevy::{input::mouse::{MouseMotion, MouseWheel}, prelude::*, render::camera::PerspectiveProjection};
 
