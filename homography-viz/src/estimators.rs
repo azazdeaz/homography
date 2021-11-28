@@ -6,7 +6,7 @@ use bevy::{
 use futures_lite::future;
 use homography::{find_homography, find_homography_with_arrsac, HomographyMatrix};
 use itertools::Itertools;
-use std::time::{Instant};
+use std::time::Instant;
 
 #[cfg(feature = "opencv")]
 use opencv::{
@@ -64,7 +64,7 @@ pub fn estimate_homography_with_arrsac(
     }
 
     if task.is_none() {
-        for MatchEvent(matches) in ev_matches.iter() {
+        if let Some(MatchEvent(matches)) = ev_matches.iter().last() {
             let matches = matches.clone();
             let use_sc = *use_sc;
             *task = Some((
@@ -81,8 +81,6 @@ pub fn estimate_homography_with_arrsac(
                 }),
                 Instant::now(),
             ));
-
-            break;
         }
     }
 }

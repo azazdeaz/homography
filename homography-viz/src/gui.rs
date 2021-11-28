@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{time::Duration, f32::consts::PI};
 use homography::HomographyMatrix;
 use crate::{
     components::{Camera, Landmarks2, Plane},
@@ -23,9 +23,9 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut plane.x, -100.0..=100.0).text("x"));
                 ui.add(Slider::new(&mut plane.y, -100.0..=100.0).text("y"));
                 ui.add(Slider::new(&mut plane.z, -100.0..=100.0).text("z"));
-                ui.add(Slider::new(&mut plane.rot_x, -3.14..=3.14).text("rot_x"));
-                ui.add(Slider::new(&mut plane.rot_y, -3.14..=3.14).text("rot_y"));
-                ui.add(Slider::new(&mut plane.rot_z, -3.14..=3.14).text("rot_z"));
+                ui.add(Slider::new(&mut plane.rot_x, -PI..=PI).text("rot_x"));
+                ui.add(Slider::new(&mut plane.rot_y, -PI..=PI).text("rot_y"));
+                ui.add(Slider::new(&mut plane.rot_z, -PI..=PI).text("rot_z"));
                 ui.add(Slider::new(&mut plane.points_x, 0..=50).text("points_x"));
                 ui.add(Slider::new(&mut plane.points_y, 0..=50).text("points_y"));
             });
@@ -34,7 +34,7 @@ pub fn render_gui(
             ui.collapsing(format!("camera {}", camera_id), |ui| {
                 ui.add(Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
                 ui.add(Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
-                ui.add(Slider::new(&mut camera.fovy, (3.14 / 8.0)..=3.14).text("fovy"));
+                ui.add(Slider::new(&mut camera.fovy, (PI / 8.0)..=PI).text("fovy"));
                 ui.add(Slider::new(&mut camera.x, -100.0..=100.0).text("x"));
                 ui.add(Slider::new(&mut camera.y, -100.0..=100.0).text("y"));
                 ui.add(Slider::new(&mut camera.z, -100.0..=100.0).text("z"));

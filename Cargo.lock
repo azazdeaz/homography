@@ -1207,18 +1207,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cv-pinhole"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e4261f8a8c5609d460875963d40a986920ede5205c7c4f8e359b5c68768e119"
-dependencies = [
- "cv-core",
- "derive_more",
- "float-ord",
- "num-traits",
-]
-
-[[package]]
 name = "d3d12"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1441,12 +1429,6 @@ name = "fixedbitset"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "398ea4fabe40b9b0d885340a2a991a44c8a645624075ad966d21f88688e2b69e"
-
-[[package]]
-name = "float-ord"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bad48618fdb549078c333a7a8528acb57af271d0433bdecd523eb620628364e"
 
 [[package]]
 name = "fnv"
@@ -1931,13 +1913,9 @@ dependencies = [
 name = "homography-viz"
 version = "0.1.0"
 dependencies = [
- "arrsac",
  "bevy",
  "bevy_egui",
  "cv-core",
- "cv-pinhole",
- "derive_more",
- "eyre",
  "futures-lite",
  "homography",
  "itertools",
@@ -1945,8 +1923,6 @@ dependencies = [
  "opencv",
  "rand 0.8.4",
  "rand_distr",
- "rand_pcg",
- "sample-consensus",
 ]
 
 [[package]]
