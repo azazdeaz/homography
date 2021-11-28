@@ -4,7 +4,7 @@ use bevy::{
     tasks::{AsyncComputeTaskPool, Task},
 };
 use futures_lite::future;
-use homography::{find_homography, run_homography_kernel, HomographyMatrix};
+use homography::{find_homography, find_homography_with_arrsac, HomographyMatrix};
 use itertools::Itertools;
 use std::time::{Instant};
 
@@ -70,9 +70,9 @@ pub fn estimate_homography_with_arrsac(
             *task = Some((
                 thread_pool.spawn(async move {
                     if use_sc {
-                        find_homography(&matches)
+                        find_homography_with_arrsac(&matches)
                     } else {
-                        if let Ok(h) = run_homography_kernel(matches) {
+                        if let Ok(h) = find_homography(matches) {
                             Some(HomographyMatrix(h))
                         } else {
                             None

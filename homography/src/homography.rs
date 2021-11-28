@@ -4,18 +4,8 @@ use itertools::Itertools;
 use na::Const;
 use nalgebra::{self as na, Matrix3, SMatrix};
 type Point2 = na::Point2<f64>;
-use arrsac::Arrsac;
 use derive_more::{AsMut, AsRef, Deref, DerefMut, Display, From, Into};
-use rand::SeedableRng;
-use rand_pcg::Pcg64;
-use sample_consensus::{Consensus, Estimator, Model};
-
-pub fn find_homography(matches: &Vec<FeatureMatch<Point2>>) -> Option<HomographyMatrix> {
-    let mut arrsac = Arrsac::new(0.1, Pcg64::from_seed([1; 32]));
-    let estimator = HomographyEstimator {};
-    // TODO shuffle matches?
-    arrsac.model(&estimator, matches.iter().cloned())
-}
+use sample_consensus::{Estimator, Model};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, PartialOrd, AsMut, AsRef, Deref, DerefMut, Display, From, Into,
@@ -45,7 +35,7 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
         I: Iterator<Item = FeatureMatch<Point2>> + Clone,
     {
         let matches = data.take(Self::MIN_SAMPLES).collect_vec();
-        if let Ok(homography_matrix) = run_homography_kernel(matches) {
+        if let Ok(homography_matrix) = find_homography(matches) {
             Some(HomographyMatrix(homography_matrix))
         } else {
             None
@@ -53,7 +43,7 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
     }
 }
 
-pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64>> {
+pub fn find_homography(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64>> {
     // TODO detect degenerate cases
     let (m1, m2): (Vec<_>, Vec<_>) = matches.iter().map(|m| (m.0, m.1)).unzip();
 
@@ -155,7 +145,7 @@ pub fn run_homography_kernel(matches: Vec<FeatureMatch<Point2>>) -> Result<Matri
 
 #[cfg(test)]
 mod tests {
-    use crate::{HomographyMatrix, homography::Point2, run_homography_kernel};
+    use crate::{find_homography, homography::Point2};
     use approx::AbsDiffEq;
     use cv_core::FeatureMatch;
     use itertools::{zip, Itertools};
@@ -191,11 +181,14 @@ mod tests {
                 )
             })
             .collect_vec();
-        let h= run_homography_kernel(matches).unwrap();
+        let h = find_homography(matches).unwrap();
         // TODO implement cvtest::norm from opencv modules/ts/src/ts_func.cpp
-        
+
         let max_diff = 0.000001;
-        assert!(h_src.abs_diff_eq(&h, max_diff), "absolute difference is too large");
+        assert!(
+            h_src.abs_diff_eq(&h, max_diff),
+            "absolute difference is too large"
+        );
         assert!((h_src - h).norm() < max_diff, "L2 norm is too large");
     }
 }

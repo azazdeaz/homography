@@ -6,21 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-homography = { version = "0.1.0", path = "../homography" }
-arrsac = "0.9.0"
+homography = { version = "0.1.0", path = "../homography", features = [
+    "arrsac-sc",
+] }
 cv-core = "0.15.0"
-cv-pinhole = "0.6.0"
-derive_more = "0.99.16"
-eyre = "0.6.5"
 opencv = { version = "0.55.0", features = ["clang-runtime"], optional = true }
 nalgebra = "0.29.0"
 bevy = "0.5"
 bevy_egui = "0.7"
 itertools = "0.10.1"
 rand = "0.8.4"
-rand_pcg = "0.3.1"
 rand_distr = "0.4.2"
-sample-consensus = "1.0.2"
 futures-lite = "1.12.0"
 
 [[bin]]
