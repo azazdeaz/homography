@@ -24,7 +24,12 @@ impl Plugin for CamerasAndPlanes3D {
 fn add_cameras(mut commands: Commands) {
     for i in 0..2 {
         let x = if i == 0 { -10.0 } else { 10.0 };
-        let camera = Camera{ fovy: 0.65, z: 22.0, x, ..Default::default() };
+        let camera = Camera {
+            fovy: 0.65,
+            z: 22.0,
+            x,
+            ..Default::default()
+        };
         commands
             .spawn()
             .insert(camera)
@@ -107,26 +112,62 @@ fn update_plane_meshes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut landmarks: Query<(&Landmarks3, Option<&Handle<Mesh>>, Entity)>,
+    mut landmarks: Query<(
+        &Landmarks3,
+        Option<&Handle<Mesh>>,
+        Entity,
+        Option<&Handle<Mesh>>,
+        Option<&Children>,
+    )>,
+    mut transforms: Query<&mut Transform>,
 ) {
-    for (landmarks, mesh, entity) in landmarks.iter_mut() {
+    for (landmarks, mesh, entity, viz, children) in landmarks.iter_mut() {
+        if viz.is_none() {
+            commands.entity(entity).insert_bundle(PbrBundle {
+                ..Default::default()
+            });
+        }
+
         let vertices = landmarks
             .iter()
             .map(|lm| [lm.point.coords.x, lm.point.coords.y, lm.point.coords.z])
             .collect_vec();
 
-        if let Some(mesh) = mesh {
-            let mut mesh = meshes.get_mut(mesh).unwrap();
-            fill_mesh_with_vertices(mesh, vertices);
+        let empty_children = Children::default();
+        let children = if let Some(children) = children {
+            children
         } else {
-            let mut mesh = Mesh::new(PrimitiveTopology::LineStrip);
-            fill_mesh_with_vertices(&mut mesh, vertices);
-            let pbr = PbrBundle {
-                mesh: meshes.add(mesh),
-                material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-                ..Default::default()
-            };
-            commands.entity(entity).insert_bundle(pbr);
+            &empty_children
+        };
+
+        for (i, v) in vertices.into_iter().enumerate() {
+            if let Some(child) = children.get(i) {
+                let transform = transforms.get_mut(*child);
+                if let Ok(mut transform) = transform {
+                    transform.translation = v.into();
+                }
+            } else {
+                commands
+                    .spawn_bundle(PbrBundle {
+                        mesh: meshes.add(Mesh::from(shape::Icosphere {
+                            radius: 0.5,
+                            subdivisions: 2,
+                        })),
+                        material: materials.add(StandardMaterial {
+                            base_color: Color::PINK,
+                            ..Default::default()
+                        }),
+                        transform: Transform::from_xyz(v[0], v[1], v[2]),
+                        ..Default::default()
+                    })
+                    .insert(Parent(entity));
+            }
+        }
+
+        if children.len() > landmarks.len() {
+            for unused in &children[landmarks.len()..] {
+                commands.entity(*unused).despawn_recursive();
+            }
         }
     }
 }
