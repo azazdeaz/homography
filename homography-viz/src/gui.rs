@@ -18,6 +18,7 @@ pub fn render_gui(
     mut results: Query<(&Option<HomographyMatrix>, &EstimationLabel, Option<&Duration>)>,
 ) {
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
+        ui.style_mut().spacing.slider_width = 270.0;
         for mut plane in planes.iter_mut() {
             ui.collapsing("plane", |ui| {
                 ui.add(Slider::new(&mut plane.x, -100.0..=100.0).text("x"));

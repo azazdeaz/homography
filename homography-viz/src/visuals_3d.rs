@@ -23,8 +23,8 @@ impl Plugin for CamerasAndPlanes3D {
 
 fn add_cameras(mut commands: Commands) {
     for i in 0..2 {
-        let mut camera = Camera::default();
-        camera.target_x = i as f32 * 0.2;
+        let x = if i == 0 { -10.0 } else { 10.0 };
+        let camera = Camera{ fovy: 0.65, z: 22.0, x, ..Default::default() };
         commands
             .spawn()
             .insert(camera)
