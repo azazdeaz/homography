@@ -1,5 +1,5 @@
 use cv_core::FeatureMatch;
-use nalgebra as na;
+use nalgebra::{self as na, Isometry3, Matrix4, Perspective3, Point3, Vector3};
 pub struct Camera {
     pub width: f32,
     pub height: f32,
@@ -38,6 +38,38 @@ impl Default for Camera {
     }
 }
 
+impl Camera {
+    /// The point the camera is at
+    pub fn eye(&self) -> Point3<f32> {
+        Point3::new(self.x, self.y, self.z)
+    }
+    /// The point the camera looks at
+    pub fn target(&self) -> Point3<f32> {
+        Point3::new(self.target_x, self.target_y, self.target_z)
+    }
+    pub fn model_view_projection(&self) -> Matrix4<f32> {
+        let model = Isometry3::new(Vector3::x(), na::zero());
+
+        let eye = self.eye();
+        let target = self.target();
+        let view = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
+
+        // A perspective projection.
+        let projection =
+            Perspective3::new(self.width / self.height, self.fovy, self.znear, self.zfar);
+
+        // The combination of the model with the view is still an isometry.
+        let model_view = view * model;
+
+        // Convert everything to a `Matrix4` so that they can be combined.
+        let mat_model_view = model_view.to_homogeneous();
+
+        // Combine everything.
+        // let translation = Translation3::new(self.x, self.y, self.z).to_homogeneous();
+        projection.as_matrix() * mat_model_view
+    }
+}
+
 pub struct Landmark2 {
     pub id: String,
     pub point: na::Point2<f32>,
@@ -65,5 +97,3 @@ pub struct Plane {
 }
 
 pub struct MatchEvent(pub Vec<FeatureMatch<na::Point2<f64>>>);
-
-pub type EstimationMethod = String;

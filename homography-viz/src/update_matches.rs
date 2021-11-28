@@ -10,31 +10,8 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
     let mut rng = rand::thread_rng();
     let noise = Normal::new(0.0, camera.noise).unwrap();
     let outlier_noise = Normal::new(0.0, camera.outlier_noise).unwrap();
-    let model = Isometry3::new(Vector3::x(), na::zero());
 
-    // Our camera looks toward the point (1.0, 0.0, 0.0).
-    // It is located at (0.0, 0.0, 1.0).
-    let eye = Point3::new(camera.x, camera.y, camera.z);
-    let target = Point3::new(camera.target_x, camera.target_y, camera.target_z);
-    let view = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
-
-    // A perspective projection.
-    let projection = Perspective3::new(
-        camera.width / camera.height,
-        camera.fovy,
-        camera.znear,
-        camera.zfar,
-    );
-
-    // The combination of the model with the view is still an isometry.
-    let model_view = view * model;
-
-    // Convert everything to a `Matrix4` so that they can be combined.
-    let mat_model_view = model_view.to_homogeneous();
-
-    // Combine everything.
-    // let translation = Translation3::new(camera.x, camera.y, camera.z).to_homogeneous();
-    let model_view_projection = projection.as_matrix() * mat_model_view;
+    let model_view_projection = camera.model_view_projection();
 
     landmarks
         .iter()
