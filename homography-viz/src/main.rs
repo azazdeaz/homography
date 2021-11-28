@@ -18,6 +18,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
         .add_plugin(visuals_3d::CamerasAndPlanes3D)
+        .add_plugin(estimators::Estimators)
         .add_startup_system(setup_3d.system())
         .add_startup_system(orbit_camera::spawn_camera.system())
         .add_system(orbit_camera::pan_orbit_camera.system())
@@ -27,13 +28,6 @@ fn main() {
                 .system()
                 .chain(update_matches::update_matches.system()),
         )
-        .add_system(estimators::estimate_homography_with_arrsac.system())
-        .add_system(
-            estimators::estimate_homography_with_arrsac
-                .system()
-                .config(|params| params.0 = Some(true)),
-        )
-        .add_system(estimators::estimate_homography_with_opencv.system())
         .add_system(gui::render_gui.system())
         .add_system(utils::inspect.system())
         .run();

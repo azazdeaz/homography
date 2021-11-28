@@ -1,23 +1,42 @@
 use crate::components::MatchEvent;
-use homography::{find_homography, run_homography_kernel, HomographyMatrix};
 use bevy::{
     prelude::*,
     tasks::{AsyncComputeTaskPool, Task},
 };
 use futures_lite::future;
+use homography::{find_homography, run_homography_kernel, HomographyMatrix};
 use itertools::Itertools;
+use std::time::{Instant};
+
+#[cfg(feature = "opencv")]
 use opencv::{
     self,
-    core::{Mat_, Point2f, ToInputArray},
+    core::{Point2f, ToInputArray},
     prelude::{Mat, MatTrait, MatTraitConst},
     types::VectorOfPoint2f,
 };
-use std::time::{Duration, Instant};
+
+pub struct Estimators;
+impl Plugin for Estimators {
+    fn build(&self, app: &mut AppBuilder) {
+        app.add_system(estimate_homography_with_arrsac.system())
+            .add_system(
+                estimate_homography_with_arrsac
+                    .system()
+                    .config(|params| params.0 = Some(true)),
+            );
+
+        #[cfg(feature = "opencv")]
+        {
+            app.add_system(estimate_homography_with_opencv.system());
+        }
+    }
+}
 
 pub struct EstimationLabel(pub String);
 impl std::fmt::Display for EstimationLabel {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", &self.0)
     }
 }
 
@@ -55,8 +74,7 @@ pub fn estimate_homography_with_arrsac(
                     } else {
                         if let Ok(h) = run_homography_kernel(matches) {
                             Some(HomographyMatrix(h))
-                        }
-                        else {
+                        } else {
                             None
                         }
                     }
@@ -69,31 +87,24 @@ pub fn estimate_homography_with_arrsac(
     }
 }
 
-pub struct OpenCVEstimation;
+#[cfg(feature = "opencv")]
 pub fn estimate_homography_with_opencv(
     mut commands: Commands,
     mut ev_matches: EventReader<MatchEvent>,
     mut task: Local<Option<(Task<Option<HomographyMatrix>>, Instant)>>,
-    mut estimation: Query<(
-        &mut Option<HomographyMatrix>,
-        &mut Duration,
-        &OpenCVEstimation,
-    )>,
+    mut estimation_entity: Local<Option<Entity>>,
     thread_pool: Res<AsyncComputeTaskPool>,
 ) {
     if task.is_some() {
         let (t, started_at) = task.as_mut().unwrap();
         if let Some(hm) = future::block_on(future::poll_once(t)) {
-            if let Ok((mut _hm, mut time, _)) = estimation.single_mut() {
-                *_hm = hm;
-                *time = started_at.elapsed();
+            let time = started_at.elapsed();
+            if let Some(estimation_entity) = *estimation_entity {
+                commands.entity(estimation_entity).insert_bundle((hm, time));
             } else {
-                commands.spawn().insert_bundle((
-                    hm,
-                    OpenCVEstimation,
-                    EstimationLabel("With OpenCV".into()),
-                    started_at.elapsed(),
-                ));
+                let label = "With OpenCV";
+                let label = EstimationLabel(label.into());
+                *estimation_entity = Some(commands.spawn().insert_bundle((hm, label, time)).id());
             }
             *task = None;
         }
