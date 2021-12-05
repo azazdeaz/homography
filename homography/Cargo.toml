@@ -17,6 +17,12 @@ sample-consensus = "1.0.2"
 [dev-dependencies]
 approx = "0.5.0"
 rand = "0.8.4"
+criterion = "0.2"
+test-utils = { version = "0.1.0", path = "../test-utils" }
+
+[[bench]]
+name = "bench_kernel"
+harness = false
 
 [features]
 arrsac-sc = ["arrsac", "rand", "rand_pcg"]

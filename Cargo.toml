@@ -3,4 +3,5 @@
 members = [
     "homography",
     "homography-viz",
+    "test-utils",
 ]
