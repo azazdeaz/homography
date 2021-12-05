@@ -10,10 +10,10 @@ pub struct TestData {
 }
 
 impl TestData {
-    pub fn new() -> Self {
+    pub fn new(match_count: usize) -> Self {
         let img_size = 100.0;
         let mut rng = rand::thread_rng();
-        let src = (0..100)
+        let src = (0..match_count)
             .map(|_| {
                 Point2::new(rng.gen_range(0.0..img_size), rng.gen_range(0.0..img_size))
                     .to_homogeneous()

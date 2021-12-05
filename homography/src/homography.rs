@@ -151,7 +151,7 @@ pub mod tests {
 
     #[test]
     fn it_works() {
-        let TestData { matches, h: h_src } = TestData::new();
+        let TestData { matches, h: h_src } = TestData::new(48);
         let h = find_homography(matches).unwrap();
         // TODO implement cvtest::norm from opencv modules/ts/src/ts_func.cpp
 
