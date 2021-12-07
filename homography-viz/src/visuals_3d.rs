@@ -93,7 +93,7 @@ fn update_camera_meshes(
         vertices.append(&mut utils::cross_lines(&camera.target(), 1.0));
 
         if let Some(mesh) = mesh {
-            let mut mesh = meshes.get_mut(mesh).unwrap();
+            let mesh = meshes.get_mut(mesh).unwrap();
             fill_mesh_with_vertices(mesh, vertices);
         } else {
             let mut mesh = Mesh::new(PrimitiveTopology::LineStrip);
@@ -114,14 +114,13 @@ fn update_plane_meshes(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut landmarks: Query<(
         &Landmarks3,
-        Option<&Handle<Mesh>>,
         Entity,
         Option<&Handle<Mesh>>,
         Option<&Children>,
     )>,
     mut transforms: Query<&mut Transform>,
 ) {
-    for (landmarks, mesh, entity, viz, children) in landmarks.iter_mut() {
+    for (landmarks, entity, viz, children) in landmarks.iter_mut() {
         if viz.is_none() {
             commands.entity(entity).insert_bundle(PbrBundle {
                 ..Default::default()

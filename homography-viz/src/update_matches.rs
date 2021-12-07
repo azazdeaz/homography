@@ -2,9 +2,9 @@ use crate::components::{Camera, Landmark2, Landmarks2, Landmarks3, MatchEvent};
 use bevy::prelude::*;
 use cv_core::FeatureMatch;
 use itertools::Itertools;
-use nalgebra::{self as na, Isometry3, Perspective3, Point2, Point3, Vector3};
+use nalgebra::{Point2, Point3};
 use rand::Rng;
-use rand_distr::{Normal, Distribution};
+use rand_distr::{Distribution, Normal};
 
 fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
     let mut rng = rand::thread_rng();
@@ -26,12 +26,11 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
                     && point.coords.z.abs() <= 1.0
                 {
                     let mut x = (point.coords.x + 1.0) * camera.width / 2.0;
-                    let mut y = (point.coords.y + 1.0) * camera.height / 2.0 ;
+                    let mut y = (point.coords.y + 1.0) * camera.height / 2.0;
                     if rng.gen::<f32>() > camera.outlier_proportion {
                         x += noise.sample(&mut rng);
                         y += noise.sample(&mut rng);
-                    }
-                    else {
+                    } else {
                         x += outlier_noise.sample(&mut rng);
                         y += outlier_noise.sample(&mut rng);
                     }
@@ -49,9 +48,9 @@ fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
 pub fn render_landmarks(
     mut commands: Commands,
     mut cameras: Query<(&Camera, Option<&mut Landmarks2>, Entity)>,
-    mut landmarks: Query<&Landmarks3>,
+    landmarks: Query<&Landmarks3>,
 ) {
-    if let (Ok(mut landmarks), Some((mut cam1, mut cam2))) =
+    if let (Ok(landmarks), Some((cam1, cam2))) =
         (landmarks.single(), cameras.iter_mut().collect_tuple())
     {
         let points1 = render_points(cam1.0, landmarks);
@@ -70,7 +69,7 @@ pub fn render_landmarks(
 }
 
 pub fn update_matches(
-    mut cameras: Query<(&Camera, &Landmarks2)>,
+    cameras: Query<(&Camera, &Landmarks2)>,
     mut ev_matches: EventWriter<MatchEvent>,
 ) {
     if let Some((cam1, cam2)) = cameras.iter().collect_tuple() {
@@ -80,7 +79,10 @@ pub fn update_matches(
             .iter()
             .filter_map(|lm1| {
                 if let Some(lm2) = landmarks2.iter().find(|lm2| lm2.id == lm1.id) {
-                    Some(FeatureMatch(lm1.point.cast::<f64>(), lm2.point.cast::<f64>()))
+                    Some(FeatureMatch(
+                        lm1.point.cast::<f64>(),
+                        lm2.point.cast::<f64>(),
+                    ))
                 } else {
                     None
                 }

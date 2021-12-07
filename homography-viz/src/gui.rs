@@ -1,21 +1,25 @@
-use std::{time::Duration, f32::consts::PI};
-use homography::HomographyMatrix;
 use crate::{
     components::{Camera, Landmarks2, Plane},
     estimators::EstimationLabel,
 };
 use bevy::prelude::*;
 use bevy_egui::{
-    egui::{self, pos2, Color32, Rect, Shape, Slider},
-    EguiContext, EguiPlugin,
+    egui::{self, Color32, Shape, Slider},
+    EguiContext,
 };
+use homography::HomographyMatrix;
 use itertools::Itertools;
+use std::{f32::consts::PI, time::Duration};
 
 pub fn render_gui(
     egui_context: ResMut<EguiContext>,
     mut planes: Query<&mut Plane>,
     mut cameras: Query<(&mut Camera, &Landmarks2)>,
-    mut results: Query<(&Option<HomographyMatrix>, &EstimationLabel, Option<&Duration>)>,
+    results: Query<(
+        &Option<HomographyMatrix>,
+        &EstimationLabel,
+        Option<&Duration>,
+    )>,
 ) {
     egui::Window::new("Items").show(egui_context.ctx(), |ui| {
         ui.style_mut().spacing.slider_width = 270.0;
@@ -31,7 +35,7 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut plane.points_y, 0..=50).text("points_y"));
             });
         }
-        for (camera_id, (mut camera, mut landmarks)) in cameras.iter_mut().enumerate() {
+        for (camera_id, (mut camera, landmarks)) in cameras.iter_mut().enumerate() {
             ui.collapsing(format!("camera {}", camera_id), |ui| {
                 ui.add(Slider::new(&mut camera.width, 1.0..=1000.0).text("cam width"));
                 ui.add(Slider::new(&mut camera.height, 1.0..=1000.0).text("cam height"));
@@ -43,7 +47,10 @@ pub fn render_gui(
                 ui.add(Slider::new(&mut camera.target_y, -100.0..=100.0).text("target_y"));
                 ui.add(Slider::new(&mut camera.target_z, -100.0..=100.0).text("target_z"));
                 ui.add(Slider::new(&mut camera.noise, 0.0..=50.0).text("noise"));
-                ui.add(Slider::new(&mut camera.outlier_proportion, 0.0..=1.0).text("outlier_proportion"));
+                ui.add(
+                    Slider::new(&mut camera.outlier_proportion, 0.0..=1.0)
+                        .text("outlier_proportion"),
+                );
                 ui.add(Slider::new(&mut camera.outlier_noise, 0.0..=50.0).text("outlier_noise"));
             });
 
@@ -52,7 +59,7 @@ pub fn render_gui(
             egui::Window::new(format!("Camera {} Image", camera_id))
                 .default_size((width, height))
                 .show(egui_context.ctx(), |ui| {
-                    let (response, mut painter) = ui.allocate_painter(
+                    let (response, painter) = ui.allocate_painter(
                         ui.available_size_before_wrap_finite(),
                         egui::Sense::drag(),
                     );
@@ -75,21 +82,21 @@ pub fn render_gui(
                         ));
                     }
                 });
-            
-            for (h, label, time) in results.iter(){
-            egui::Window::new(label).show(egui_context.ctx(), |ui| {
+
+            for (h, label, time) in results.iter() {
+                egui::Window::new(label).show(egui_context.ctx(), |ui| {
                     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
                     ui.style_mut().wrap = Some(false);
                     if let Some(time) = time {
-
-                    ui.label(format!("Time {:?}", time));
+                        ui.label(format!("Time {:?}", time));
                     }
                     if let Some(h) = h {
                         ui.label(pretty_hmat(h));
                     } else {
                         ui.label("no solution");
                     }
-            });}
+                });
+            }
         }
     });
 }

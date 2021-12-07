@@ -1,10 +1,10 @@
+use crate::components::{Landmark3, Landmarks3, Plane};
 use bevy::prelude::*;
-use nalgebra::{Vector3, Point3, Isometry3};
-use crate::components::{Landmarks3, Landmark3, Plane};
+use nalgebra::{Isometry3, Point3, Vector3};
 
-pub fn update_landmarks (
+pub fn update_landmarks(
     mut commands: Commands,
-    mut planes: Query<&Plane>,
+    planes: Query<&Plane>,
     mut landmarks: Query<&mut Landmarks3>,
 ) {
     if let Ok(mut landmarks) = landmarks.single_mut() {
@@ -30,8 +30,7 @@ pub fn update_landmarks (
                 }
             }
         }
-    }
-    else {
+    } else {
         // TODO there must be a way to upsert this
         commands.spawn().insert(Landmarks3::default());
     }
