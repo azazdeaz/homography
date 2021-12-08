@@ -28,6 +28,7 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - run: sudo apt-get install libasound2-dev libudev-dev
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -43,6 +44,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add rustfmt
+      - run: sudo apt-get install libasound2-dev libudev-dev
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -59,6 +61,7 @@ jobs:
           toolchain: stable
           override: true
       - run: rustup component add clippy
+      - run: sudo apt-get install libasound2-dev libudev-dev
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
