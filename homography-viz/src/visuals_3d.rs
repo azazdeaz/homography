@@ -1,4 +1,5 @@
 use bevy::{
+    ecs::system::EntityCommands,
     prelude::*,
     render::{mesh::Indices, pipeline::PrimitiveTopology},
 };
@@ -17,7 +18,73 @@ impl Plugin for CamerasAndPlanes3D {
         app.add_startup_system(add_planes.system())
             .add_startup_system(add_cameras.system())
             .add_system(update_plane_meshes.system())
-            .add_system(update_camera_meshes.system());
+            .add_system(update_camera_meshes.system())
+            .add_system(update_camera_models.system());
+    }
+}
+struct CameraModel {}
+
+fn init_camera_models(mut commands: EntityCommands, asset_server: &Res<AssetServer>) {
+    // note that we have to include the `Scene0` label
+    let my_gltf = asset_server.load(
+        "/home/azazdeaz/repos/test/rust/homography/homography-viz/assets/models/camera/scene.gltf#Scene0",
+    );
+
+    let r = Transform::from_rotation(Quat::from_rotation_ypr(
+        std::f32::consts::PI,
+        -std::f32::consts::FRAC_PI_2,
+        0.0,
+    ));
+    let s = Transform::from_scale(Vec3::splat(0.7));
+    let t = s * r * Transform::from_xyz(-0.022885, -10.0, 0.517862);
+
+    commands.with_children(|parent| {
+        parent
+            .spawn_bundle((
+                CameraModel {},
+                Transform::from_xyz(0.0, 0.0, 0.0),
+                GlobalTransform::identity(),
+            ))
+            .with_children(|parent| {
+                parent
+                    .spawn_bundle((t, GlobalTransform::identity()))
+                    .with_children(|parent| {
+                        parent.spawn_scene(my_gltf);
+                    });
+            });
+    });
+}
+
+fn update_camera_models(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    cameras: Query<(&Camera, Option<&Children>, Entity)>,
+    mut models: Query<(&mut Transform, With<CameraModel>)>,
+) {
+    println!("udpate camera models");
+    for (camera, children, entity) in cameras.iter() {
+        println!("up cam {:?}", children);
+        let model_entity = if let Some(children) = children {
+            children
+                .iter()
+                .find(|&&child| models.get_mut(child).is_ok())
+        } else {
+            None
+        };
+        if let Some(&model_entity) = model_entity {
+            println!("udpate camera models A");
+            let (mut transform, _) = models.get_mut(model_entity).unwrap();
+            transform.translation.x = camera.x;
+            transform.translation.y = camera.y;
+            transform.translation.z = camera.z;
+            transform.look_at(
+                Vec3::new(camera.target_x, camera.target_y, camera.target_z),
+                Vec3::Y,
+            );
+        } else {
+            println!("udpate camera models B");
+            init_camera_models(commands.entity(entity), &asset_server);
+        }
     }
 }
 
