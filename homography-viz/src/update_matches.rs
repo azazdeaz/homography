@@ -1,4 +1,4 @@
-use crate::components::{Camera, Landmark2, Landmarks2, Landmarks3, MatchEvent};
+use crate::components::{Camera, Landmark2, Landmark3, Landmarks2, Landmarks3, MatchEvent};
 use bevy::prelude::*;
 use cv_core::FeatureMatch;
 use itertools::Itertools;
@@ -6,7 +6,7 @@ use nalgebra::{Point2, Point3};
 use rand::Rng;
 use rand_distr::{Distribution, Normal};
 
-fn render_points(camera: &Camera, landmarks: &Landmarks3) -> Landmarks2 {
+fn render_points(camera: &Camera, landmarks: &[Landmark3]) -> Landmarks2 {
     let mut rng = rand::thread_rng();
     let noise = Normal::new(0.0, camera.noise).unwrap();
     let outlier_noise = Normal::new(0.0, camera.outlier_noise).unwrap();

@@ -1,8 +1,8 @@
-use cv_core::FeatureMatch;
 use arrsac::Arrsac;
+use cv_core::FeatureMatch;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
-use sample_consensus::{Consensus};
+use sample_consensus::Consensus;
 
 use crate::{HomographyEstimator, HomographyMatrix};
 

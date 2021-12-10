@@ -11,12 +11,16 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("kernel");
     for matches in [4, 16, 64, 256].iter() {
         group.throughput(Throughput::Elements(*matches as u64));
-        group.bench_with_input(BenchmarkId::from_parameter(matches), matches, |b, &matches| {
-            b.iter(|| {
-                let TestData { matches, .. } = TestData::new(matches);
-                find_homography(matches).unwrap()
-            });
-        });
+        group.bench_with_input(
+            BenchmarkId::from_parameter(matches),
+            matches,
+            |b, &matches| {
+                b.iter(|| {
+                    let TestData { matches, .. } = TestData::new(matches);
+                    find_homography(matches).unwrap()
+                });
+            },
+        );
     }
     group.finish();
 }

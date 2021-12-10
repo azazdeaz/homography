@@ -1,7 +1,11 @@
 // From https://bevy-cheatbook.github.io/cookbook/pan-orbit-camera.html
 
 /// Tags an entity as capable of panning and orbiting.
-use bevy::{input::mouse::{MouseMotion, MouseWheel}, prelude::*, render::camera::PerspectiveProjection};
+use bevy::{
+    input::mouse::{MouseMotion, MouseWheel},
+    prelude::*,
+    render::camera::PerspectiveProjection,
+};
 
 pub struct PanOrbitCamera {
     /// The "focus point" to orbit around. It is automatically updated when panning the camera
@@ -68,7 +72,11 @@ pub fn pan_orbit_camera(
             let window = get_primary_window_size(&windows);
             let delta_x = {
                 let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
-                if pan_orbit.upside_down { -delta } else { delta }
+                if pan_orbit.upside_down {
+                    -delta
+                } else {
+                    delta
+                }
             };
             let delta_y = rotation_move.y / window.y * std::f32::consts::PI;
             let yaw = Quat::from_rotation_y(-delta_x);
@@ -98,7 +106,8 @@ pub fn pan_orbit_camera(
             // parent = x and y rotation
             // child = z-offset
             let rot_matrix = Mat3::from_quat(transform.rotation);
-            transform.translation = pan_orbit.focus + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, pan_orbit.radius));
+            transform.translation =
+                pan_orbit.focus + rot_matrix.mul_vec3(Vec3::new(0.0, 0.0, pan_orbit.radius));
         }
     }
 }
@@ -113,12 +122,13 @@ pub fn spawn_camera(mut commands: Commands) {
     let translation = Vec3::new(-2.0, 2.5, 5.0);
     let radius = translation.length();
 
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_translation(translation)
-            .looking_at(Vec3::ZERO, Vec3::Y),
-        ..Default::default()
-    }).insert(PanOrbitCamera {
-        radius,
-        ..Default::default()
-    });
+    commands
+        .spawn_bundle(PerspectiveCameraBundle {
+            transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y),
+            ..Default::default()
+        })
+        .insert(PanOrbitCamera {
+            radius,
+            ..Default::default()
+        });
 }

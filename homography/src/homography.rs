@@ -87,7 +87,6 @@ pub fn find_homography(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64
     let inv_h_norm = Matrix3::new(1. / s2.x, 0., c2.x, 0., 1. / s2.y, c2.y, 0., 0., 1.);
     let h_norm2 = Matrix3::new(s1.x, 0., -c1.x * s1.x, 0., s1.y, -c1.y * s1.y, 0., 0., 1.);
 
-
     let mut ltl: SMatrix<f64, 9, 9> = SMatrix::zeros();
     for i in 0..count {
         let x2 = (m2[i].x - c2.x) * s2.x;
