@@ -17,9 +17,7 @@ impl Model<FeatureMatch<Point2>> for HomographyMatrix {
         let Self(mat) = *self;
         let FeatureMatch(a, b) = data;
         let b2 = Point2::from_homogeneous(mat * a.to_homogeneous());
-        let residual = na::distance_squared(b, &b2.unwrap());
-        // println!("residual {}", residual);
-        residual
+        na::distance_squared(b, &b2.unwrap())
     }
 }
 

@@ -78,14 +78,10 @@ pub fn update_matches(
             .1
             .iter()
             .filter_map(|lm1| {
-                if let Some(lm2) = landmarks2.iter().find(|lm2| lm2.id == lm1.id) {
-                    Some(FeatureMatch(
-                        lm1.point.cast::<f64>(),
-                        lm2.point.cast::<f64>(),
-                    ))
-                } else {
-                    None
-                }
+                landmarks2
+                    .iter()
+                    .find(|lm2| lm2.id == lm1.id)
+                    .map(|lm2| FeatureMatch(lm1.point.cast::<f64>(), lm2.point.cast::<f64>()))
             })
             .collect_vec();
         ev_matches.send(MatchEvent(matches));
