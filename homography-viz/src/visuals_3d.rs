@@ -27,7 +27,7 @@ struct CameraModel {}
 fn init_camera_models(mut commands: EntityCommands, asset_server: &Res<AssetServer>) {
     // note that we have to include the `Scene0` label
     let my_gltf = asset_server.load(
-        "/home/azazdeaz/repos/test/rust/homography/homography-viz/assets/models/camera/scene.gltf#Scene0",
+        "/home/azazdeaz/repos/test/rust/homography/homography-viz/assets/models/camera.glb#Scene0",
     );
 
     let r = Transform::from_rotation(Quat::from_rotation_ypr(
@@ -47,7 +47,7 @@ fn init_camera_models(mut commands: EntityCommands, asset_server: &Res<AssetServ
             ))
             .with_children(|parent| {
                 parent
-                    .spawn_bundle((t, GlobalTransform::identity()))
+                    .spawn_bundle((Transform::identity(), GlobalTransform::identity()))
                     .with_children(|parent| {
                         parent.spawn_scene(my_gltf);
                     });
@@ -61,9 +61,7 @@ fn update_camera_models(
     cameras: Query<(&Camera, Option<&Children>, Entity)>,
     mut models: Query<(&mut Transform, With<CameraModel>)>,
 ) {
-    println!("udpate camera models");
     for (camera, children, entity) in cameras.iter() {
-        println!("up cam {:?}", children);
         let model_entity = if let Some(children) = children {
             children
                 .iter()
@@ -72,7 +70,6 @@ fn update_camera_models(
             None
         };
         if let Some(&model_entity) = model_entity {
-            println!("udpate camera models A");
             let (mut transform, _) = models.get_mut(model_entity).unwrap();
             transform.translation.x = camera.x;
             transform.translation.y = camera.y;

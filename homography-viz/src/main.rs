@@ -1,4 +1,4 @@
-use bevy::prelude::{Transform, *};
+use bevy::{prelude::{Transform, *}, pbr::AmbientLight};
 use bevy_egui::EguiPlugin;
 
 mod components;
@@ -15,6 +15,10 @@ fn main() {
     App::build()
         .add_event::<MatchEvent>()
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(AmbientLight {
+            color: Color::WHITE,
+            brightness: 1.0 / 5.0f32,
+        })
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
         .add_plugin(visuals_3d::CamerasAndPlanes3D)
@@ -73,6 +77,7 @@ fn setup_3d(
     // light
     commands.spawn_bundle(LightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
+        light: Light { fov: std::f32::consts::PI * 2.0, ..Default::default() },
         ..Default::default()
     });
 }
