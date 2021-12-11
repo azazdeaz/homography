@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Rust CV Core"><meta name="keywords" content="rust, rustlang, rust-lang, cv_core"><title>cv_core - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings" ></script><script src="../storage.js"></script><script src="../crates.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../favicon.svg"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../cv_core/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><h2 class="location">Crate cv_core</h2><div class="block version"><div class="narrow-helper"></div><p>Version 0.15.0</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all cv_core's items</p></a><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></div><div id="sidebar-vars" data-name="cv_core" data-ty="mod" data-relpath=""></div><script defer src="sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../wheel.svg"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="#">cv_core</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../clipboard.svg" width="19" height="18" alt="Copy item path"></button></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/cv_core/lib.rs.html#1-84" title="goto source code">[src]</a></span></h1><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="rust-cv-core" class="section-header"><a href="#rust-cv-core">Rust CV Core</a></h2>
+<p>This library provides common abstractions and types for computer vision (CV) in Rust.
+All the crates in the rust-cv ecosystem that have or depend on CV types depend on this crate.
+This includes things like camera model traits, bearings, poses, keypoints, etc. The crate is designed to
+be very small so that it adds negligable build time. It pulls in some dependencies
+that will probably be brought in by writing computer vision code normally.
+The core concept is that all CV crates can work together with each other by using the
+abstractions and types specified in this crate.</p>
+<p>The crate is designed to work with <code>#![no_std]</code>, even without an allocator. <code>libm</code> is used
+(indirectly through [<code>num-traits</code>]) for all math algorithms that aren’t present in <code>std</code>. Any
+code that doesn’t need to be shared across all CV crates should not belong in this repository.
+If there is a good reason to put code that some crates may need into <code>cv-core</code>, it should be
+gated behind a feature.</p>
+<h3 id="triangulation" class="section-header"><a href="#triangulation">Triangulation</a></h3>
+<p>Several of the traits with in <code>cv-core</code>, such as <a href="trait.TriangulatorObservances.html" title="TriangulatorObservances"><code>TriangulatorObservances</code></a>, must perform a process
+called <a href="https://en.wikipedia.org/wiki/Triangulation">triangulation</a>. In computer vision, this problem
+occurs quite often, as we often have some of the following data:</p>
+<ul>
+<li><a href="struct.WorldToCamera.html">The pose of a camera</a></li>
+<li><a href="struct.CameraToCamera.html">The relative pose of a camera</a></li>
+<li><a href="trait.Bearing.html">A bearing direction at which lies a feature</a></li>
+</ul>
+<p>We have to take this data and produce a 3d point. Cameras have an optical center which all bearings protrude from.
+This is often refered to as the focal point in a standard camera, but in computer vision the term optical center
+is prefered, as it is a generalized concept. What typically happens in triangulation is that we have (at least)
+two optical centers and a bearing (direction) out of each of those optical centers approximately pointing towards
+the 3d point. In an ideal world, these bearings would point exactly at the point and triangulation would be achieved
+simply by solving the equation for the point of intersection. Unfortunately, the real world throws a wrench at us, as
+the bearings wont actually intersect since they are based on noisy data. This is what causes us to need different
+triangulation algorithms, which deal with the error in different ways and have different characteristics.</p>
+<p>Here is an example where we have two pinhole cameras A and B. The <code>@</code> are used to show the
+<a href="https://en.wikipedia.org/wiki/Pinhole_camera_model">virtual image plane</a>. The virtual image plane can be thought
+of as a surface in front of the camera through which the light passes through from the point to the optical center <code>O</code>.
+The points <code>a</code> and <code>b</code> are normalized image coordinates which describe the position on the virtual image plane which
+the light passed through from the point to the optical center on cameras <code>A</code> and <code>B</code> respectively. We know the
+exact pose (position and orientation) of each of these two cameras, and we also know the normalized image coordinates,
+which we can use to compute a bearing. We are trying to solve for the point <code>p</code> which would cause the ray of light to
+pass through points <code>a</code> and <code>b</code> followed by <code>O</code>.</p>
+<ul>
+<li><code>p</code> the point we are trying to triangulate</li>
+<li><code>a</code> the normalized keypoint on camera A</li>
+<li><code>b</code> the normalized keypoint on camera B</li>
+<li><code>O</code> the optical center of a camera</li>
+<li><code>@</code> the virtual image plane</li>
+</ul>
+<div class="example-wrap"><pre class="language-text"><code>                       @
+                       @
+              p--------b--------O
+             /         @
+            /          @
+           /           @
+          /            @
+  @@@@@@@a@@@@@
+        /
+       /
+      /
+     O</code></pre></div></div></details><h2 id="reexports" class="section-header"><a href="#reexports">Re-exports</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left import-item"><code>pub use <a class="mod" href="../nalgebra/index.html" title="mod nalgebra">nalgebra</a>;</code></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left import-item"><code>pub use <a class="mod" href="../sample_consensus/index.html" title="mod sample_consensus">sample_consensus</a>;</code></div><div class="item-right docblock-short"></div></div></div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.CameraPoint.html" title="cv_core::CameraPoint struct">CameraPoint</a></div><div class="item-right docblock-short"><p>A 3d point which is relative to the camera’s optical center and orientation where
+the positive X axis is right, positive Y axis is down, and positive Z axis is forwards
+from the optical center of the camera. The unit of distance of a <code>CameraPoint</code> is
+unspecified and relative to the current reconstruction.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.CameraToCamera.html" title="cv_core::CameraToCamera struct">CameraToCamera</a></div><div class="item-right docblock-short"><p>This contains a relative pose, which is a pose that transforms the <a href="struct.CameraPoint.html" title="CameraPoint"><code>CameraPoint</code></a>
+of one image into the corresponding <a href="struct.CameraPoint.html" title="CameraPoint"><code>CameraPoint</code></a> of another image. This transforms
+the point from the camera space of camera <code>A</code> to camera <code>B</code>.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.CameraToWorld.html" title="cv_core::CameraToWorld struct">CameraToWorld</a></div><div class="item-right docblock-short"><p>This contains a camera pose, which is a pose of the camera relative to the world.
+This transforms camera points (with depth as <code>z</code>) into world coordinates.
+This also tells you where the camera is located and oriented in the world.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.FeatureMatch.html" title="cv_core::FeatureMatch struct">FeatureMatch</a></div><div class="item-right docblock-short"><p>Normalized keypoint match</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.FeatureWorldMatch.html" title="cv_core::FeatureWorldMatch struct">FeatureWorldMatch</a></div><div class="item-right docblock-short"><p>Normalized keypoint to world point match</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.KeyPoint.html" title="cv_core::KeyPoint struct">KeyPoint</a></div><div class="item-right docblock-short"><p>A point on an image frame. This type should be used when
+the point location is on the image frame in pixel coordinates.
+This means the keypoint is neither undistorted nor normalized.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Skew3.html" title="cv_core::Skew3 struct">Skew3</a></div><div class="item-right docblock-short"><p>Contains a member of the lie algebra so(3), a representation of the tangent space
+of 3d rotation. This is also known as the lie algebra of the 3d rotation group SO(3).</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.WorldPoint.html" title="cv_core::WorldPoint struct">WorldPoint</a></div><div class="item-right docblock-short"><p>A point in “world” coordinates.
+This means that the real-world units of the pose are unknown, but the
+unit of distance and orientation are the same as the current reconstruction.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.WorldToCamera.html" title="cv_core::WorldToCamera struct">WorldToCamera</a></div><div class="item-right docblock-short"><p>This contains a world pose, which is a pose of the world relative to the camera.
+This maps <a href="struct.WorldPoint.html" title="WorldPoint"><code>WorldPoint</code></a> into <a href="struct.CameraPoint.html" title="CameraPoint"><code>CameraPoint</code></a>, changing an absolute position into
+a vector relative to the camera.</p>
+</div></div></div><h2 id="traits" class="section-header"><a href="#traits">Traits</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.Bearing.html" title="cv_core::Bearing trait">Bearing</a></div><div class="item-right docblock-short"><p>Describes the direction that the projection onto the camera’s optical center
+came from. It is implemented on projection items from different camera models.
+It is also implemented for <code>Unit&lt;Vector3&lt;f64&gt;&gt;</code> if you want to pre-compute the
+normalized bearings for efficiency or to turn all camera models into a unified type.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.CameraModel.html" title="cv_core::CameraModel trait">CameraModel</a></div><div class="item-right docblock-short"><p>Allows conversion between the point on an image and the internal projection
+which can describe the bearing of the projection out of the camera.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.ImagePoint.html" title="cv_core::ImagePoint trait">ImagePoint</a></div><div class="item-right docblock-short"><p>Allows the retrieval of the point on the image the feature came from.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.Pose.html" title="cv_core::Pose trait">Pose</a></div><div class="item-right docblock-short"><p>This trait is implemented by all the different poses in this library:</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.Projective.html" title="cv_core::Projective trait">Projective</a></div><div class="item-right docblock-short"><p>This trait is implemented for homogeneous projective 3d coordinate.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.TriangulatorObservances.html" title="cv_core::TriangulatorObservances trait">TriangulatorObservances</a></div><div class="item-right docblock-short"><p>This trait is for algorithms which allow you to triangulate a point from two or more observances.
+Each observance is a <a href="struct.WorldToCamera.html" title="WorldToCamera"><code>WorldToCamera</code></a> and a <a href="trait.Bearing.html" title="Bearing"><code>Bearing</code></a>.</p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.TriangulatorRelative.html" title="cv_core::TriangulatorRelative trait">TriangulatorRelative</a></div><div class="item-right docblock-short"><p>This trait allows you to take one relative pose from camera <code>A</code> to camera <code>B</code> and two bearings <code>a</code> and <code>b</code> from
+their respective cameras to triangulate a point from the perspective of camera <code>A</code>.</p>
+</div></div></div></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="cv_core" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
+    <script src="../main.js"></script>
+</body></html>

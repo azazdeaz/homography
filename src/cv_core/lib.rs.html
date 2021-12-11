@@ -1,0 +1,172 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `&#x2F;home&#x2F;runner&#x2F;.cargo&#x2F;registry&#x2F;src&#x2F;github.com-1ecc6299db9ec823&#x2F;cv-core-0.15.0&#x2F;src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../cv_core/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1"> 1</span>
+<span id="2"> 2</span>
+<span id="3"> 3</span>
+<span id="4"> 4</span>
+<span id="5"> 5</span>
+<span id="6"> 6</span>
+<span id="7"> 7</span>
+<span id="8"> 8</span>
+<span id="9"> 9</span>
+<span id="10">10</span>
+<span id="11">11</span>
+<span id="12">12</span>
+<span id="13">13</span>
+<span id="14">14</span>
+<span id="15">15</span>
+<span id="16">16</span>
+<span id="17">17</span>
+<span id="18">18</span>
+<span id="19">19</span>
+<span id="20">20</span>
+<span id="21">21</span>
+<span id="22">22</span>
+<span id="23">23</span>
+<span id="24">24</span>
+<span id="25">25</span>
+<span id="26">26</span>
+<span id="27">27</span>
+<span id="28">28</span>
+<span id="29">29</span>
+<span id="30">30</span>
+<span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
+<span id="36">36</span>
+<span id="37">37</span>
+<span id="38">38</span>
+<span id="39">39</span>
+<span id="40">40</span>
+<span id="41">41</span>
+<span id="42">42</span>
+<span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
+<span id="49">49</span>
+<span id="50">50</span>
+<span id="51">51</span>
+<span id="52">52</span>
+<span id="53">53</span>
+<span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
+<span id="59">59</span>
+<span id="60">60</span>
+<span id="61">61</span>
+<span id="62">62</span>
+<span id="63">63</span>
+<span id="64">64</span>
+<span id="65">65</span>
+<span id="66">66</span>
+<span id="67">67</span>
+<span id="68">68</span>
+<span id="69">69</span>
+<span id="70">70</span>
+<span id="71">71</span>
+<span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+</pre><pre class="rust"><code><span class="doccomment">//! # Rust CV Core</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! This library provides common abstractions and types for computer vision (CV) in Rust.</span>
+<span class="doccomment">//! All the crates in the rust-cv ecosystem that have or depend on CV types depend on this crate.</span>
+<span class="doccomment">//! This includes things like camera model traits, bearings, poses, keypoints, etc. The crate is designed to</span>
+<span class="doccomment">//! be very small so that it adds negligable build time. It pulls in some dependencies</span>
+<span class="doccomment">//! that will probably be brought in by writing computer vision code normally.</span>
+<span class="doccomment">//! The core concept is that all CV crates can work together with each other by using the</span>
+<span class="doccomment">//! abstractions and types specified in this crate.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! The crate is designed to work with `#![no_std]`, even without an allocator. `libm` is used</span>
+<span class="doccomment">//! (indirectly through [`num-traits`]) for all math algorithms that aren&#39;t present in `std`. Any</span>
+<span class="doccomment">//! code that doesn&#39;t need to be shared across all CV crates should not belong in this repository.</span>
+<span class="doccomment">//! If there is a good reason to put code that some crates may need into `cv-core`, it should be</span>
+<span class="doccomment">//! gated behind a feature.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## Triangulation</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Several of the traits with in `cv-core`, such as [`TriangulatorObservances`], must perform a process</span>
+<span class="doccomment">//! called [triangulation](https://en.wikipedia.org/wiki/Triangulation). In computer vision, this problem</span>
+<span class="doccomment">//! occurs quite often, as we often have some of the following data:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! * [The pose of a camera](WorldToCamera)</span>
+<span class="doccomment">//! * [The relative pose of a camera](CameraToCamera)</span>
+<span class="doccomment">//! * [A bearing direction at which lies a feature](Bearing)</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! We have to take this data and produce a 3d point. Cameras have an optical center which all bearings protrude from.</span>
+<span class="doccomment">//! This is often refered to as the focal point in a standard camera, but in computer vision the term optical center</span>
+<span class="doccomment">//! is prefered, as it is a generalized concept. What typically happens in triangulation is that we have (at least)</span>
+<span class="doccomment">//! two optical centers and a bearing (direction) out of each of those optical centers approximately pointing towards</span>
+<span class="doccomment">//! the 3d point. In an ideal world, these bearings would point exactly at the point and triangulation would be achieved</span>
+<span class="doccomment">//! simply by solving the equation for the point of intersection. Unfortunately, the real world throws a wrench at us, as</span>
+<span class="doccomment">//! the bearings wont actually intersect since they are based on noisy data. This is what causes us to need different</span>
+<span class="doccomment">//! triangulation algorithms, which deal with the error in different ways and have different characteristics.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Here is an example where we have two pinhole cameras A and B. The `@` are used to show the</span>
+<span class="doccomment">//! [virtual image plane](https://en.wikipedia.org/wiki/Pinhole_camera_model). The virtual image plane can be thought</span>
+<span class="doccomment">//! of as a surface in front of the camera through which the light passes through from the point to the optical center `O`.</span>
+<span class="doccomment">//! The points `a` and `b` are normalized image coordinates which describe the position on the virtual image plane which</span>
+<span class="doccomment">//! the light passed through from the point to the optical center on cameras `A` and `B` respectively. We know the</span>
+<span class="doccomment">//! exact pose (position and orientation) of each of these two cameras, and we also know the normalized image coordinates,</span>
+<span class="doccomment">//! which we can use to compute a bearing. We are trying to solve for the point `p` which would cause the ray of light to</span>
+<span class="doccomment">//! pass through points `a` and `b` followed by `O`.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! - `p` the point we are trying to triangulate</span>
+<span class="doccomment">//! - `a` the normalized keypoint on camera A</span>
+<span class="doccomment">//! - `b` the normalized keypoint on camera B</span>
+<span class="doccomment">//! - `O` the optical center of a camera</span>
+<span class="doccomment">//! - `@` the virtual image plane</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```text</span>
+<span class="doccomment">//!                        @</span>
+<span class="doccomment">//!                        @</span>
+<span class="doccomment">//!               p--------b--------O</span>
+<span class="doccomment">//!              /         @</span>
+<span class="doccomment">//!             /          @</span>
+<span class="doccomment">//!            /           @</span>
+<span class="doccomment">//!           /            @</span>
+<span class="doccomment">//!   @@@@@@@a@@@@@</span>
+<span class="doccomment">//!         /</span>
+<span class="doccomment">//!        /</span>
+<span class="doccomment">//!       /</span>
+<span class="doccomment">//!      O</span>
+<span class="doccomment">//! ```</span>
+
+<span class="attribute">#![<span class="ident">no_std</span>]</span>
+
+<span class="kw">mod</span> <span class="ident">camera</span>;
+<span class="kw">mod</span> <span class="ident">keypoint</span>;
+<span class="kw">mod</span> <span class="ident">matches</span>;
+<span class="kw">mod</span> <span class="ident">point</span>;
+<span class="kw">mod</span> <span class="ident">pose</span>;
+<span class="kw">mod</span> <span class="ident">so3</span>;
+<span class="kw">mod</span> <span class="ident">triangulation</span>;
+
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">camera</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">keypoint</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">matches</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">nalgebra</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">point</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">pose</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">sample_consensus</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">so3</span>::<span class="kw-2">*</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">triangulation</span>::<span class="kw-2">*</span>;
+</code></pre></div>
+</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="cv_core" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
+    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
+</body></html>
