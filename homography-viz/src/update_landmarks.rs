@@ -10,7 +10,7 @@ pub fn update_landmarks(
     if let Ok(mut landmarks) = landmarks.single_mut() {
         landmarks.clear();
         for plane in planes.iter() {
-            let axisangle = Vector3::y() * plane.rot_y;
+            let axisangle = Vector3::new(plane.rot_x, plane.rot_y, plane.rot_z);
             let translation = Vector3::new(plane.x, plane.y, plane.z);
             let transform = Isometry3::new(translation, axisangle);
 

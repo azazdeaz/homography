@@ -50,7 +50,9 @@ impl Camera {
     pub fn model_view_projection(&self) -> Matrix4<f32> {
         let model = Isometry3::new(Vector3::x(), na::zero());
 
-        let eye = self.eye();
+        let mut eye = self.eye();
+        // TODO find out why the view box is shifted without this
+        eye.x += 1.0;
         let target = self.target();
         let view = Isometry3::look_at_rh(&eye, &target, &Vector3::y());
 

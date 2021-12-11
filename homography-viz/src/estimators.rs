@@ -90,6 +90,8 @@ pub fn estimate_homography_with_opencv(
     mut estimation_entity: Local<Option<Entity>>,
     thread_pool: Res<AsyncComputeTaskPool>,
 ) {
+    use itertools::Itertools;
+
     if task.is_some() {
         let (t, started_at) = task.as_mut().unwrap();
         if let Some(hm) = future::block_on(future::poll_once(t)) {
@@ -110,6 +112,10 @@ pub fn estimate_homography_with_opencv(
             let matches = matches.clone();
             *task = Some((
                 thread_pool.spawn(async move {
+                    if matches.len() < 8 {
+                        return None;
+                    }
+
                     let (src, dst): (VectorOfPoint2f, VectorOfPoint2f) = matches
                         .iter()
                         .map(|m| {
@@ -132,8 +138,12 @@ pub fn estimate_homography_with_opencv(
                         let values = (0..res.total().unwrap() as i32)
                             .map(|i| res.at_mut::<f64>(i).unwrap().clone())
                             .collect_vec();
-                        let mat = nalgebra::Matrix3::from_row_slice(values.as_slice());
-                        Some(HomographyMatrix(mat))
+                        if values.len() == 9 {
+                            let mat = nalgebra::Matrix3::from_row_slice(values.as_slice());
+                            Some(HomographyMatrix(mat))
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }

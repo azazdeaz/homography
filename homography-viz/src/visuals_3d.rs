@@ -17,6 +17,7 @@ impl Plugin for CamerasAndPlanes3D {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system(add_planes.system())
             .add_startup_system(add_cameras.system())
+            .add_startup_system(add_light.system())
             .add_system(update_plane_meshes.system())
             .add_system(update_camera_meshes.system())
             .add_system(update_camera_models.system());
@@ -30,14 +31,6 @@ fn init_camera_models(mut commands: EntityCommands, asset_server: &Res<AssetServ
         "/home/azazdeaz/repos/test/rust/homography/homography-viz/assets/models/camera.glb#Scene0",
     );
 
-    let r = Transform::from_rotation(Quat::from_rotation_ypr(
-        std::f32::consts::PI,
-        -std::f32::consts::FRAC_PI_2,
-        0.0,
-    ));
-    let s = Transform::from_scale(Vec3::splat(0.7));
-    let t = s * r * Transform::from_xyz(-0.022885, -10.0, 0.517862);
-
     commands.with_children(|parent| {
         parent
             .spawn_bundle((
@@ -47,7 +40,10 @@ fn init_camera_models(mut commands: EntityCommands, asset_server: &Res<AssetServ
             ))
             .with_children(|parent| {
                 parent
-                    .spawn_bundle((Transform::identity(), GlobalTransform::identity()))
+                    .spawn_bundle((
+                        Transform::from_scale(Vec3::splat(0.8)),
+                        GlobalTransform::identity(),
+                    ))
                     .with_children(|parent| {
                         parent.spawn_scene(my_gltf);
                     });
@@ -79,7 +75,6 @@ fn update_camera_models(
                 Vec3::Y,
             );
         } else {
-            println!("udpate camera models B");
             init_camera_models(commands.entity(entity), &asset_server);
         }
     }
@@ -153,7 +148,6 @@ fn update_camera_meshes(
             corners[7], corners[4], corners[0], corners[4], corners[1], corners[5], corners[2],
             corners[6], corners[3], corners[7],
         ];
-        vertices.append(&mut utils::cross_lines(&camera.eye(), 1.0));
         vertices.append(&mut utils::cross_lines(&camera.target(), 1.0));
 
         if let Some(mesh) = mesh {
@@ -246,4 +240,14 @@ fn fill_mesh_with_vertices(mesh: &mut Mesh, vertices: Vec<[f32; 3]>) {
     mesh.set_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
     mesh.set_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+}
+
+fn add_light(
+    mut commands: Commands,
+) {
+    commands.spawn_bundle(LightBundle {
+        transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
+        light: Light { fov: std::f32::consts::PI * 2.0, ..Default::default() },
+        ..Default::default()
+    });
 }
