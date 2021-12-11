@@ -1,0 +1,34 @@
+name: Docs
+on:
+  push:
+    branches:
+      - main
+jobs:
+  gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Install bevy dependencies
+        run: sudo apt-get update; sudo apt-get install -y --no-install-recommends libasound2-dev libudev-dev
+
+      
+      - name: Install github-pages-deploy-action dependencies
+        run: sudo apt-get update; sudo apt-get install -y --no-install-recommends rsync
+
+      - name: Generate Docs
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --lib --package homography
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.7
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: target/doc # The folder the action should deploy.
