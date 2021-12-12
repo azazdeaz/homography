@@ -242,12 +242,13 @@ fn fill_mesh_with_vertices(mesh: &mut Mesh, vertices: Vec<[f32; 3]>) {
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
 }
 
-fn add_light(
-    mut commands: Commands,
-) {
+fn add_light(mut commands: Commands) {
     commands.spawn_bundle(LightBundle {
         transform: Transform::from_translation(Vec3::new(4.0, 8.0, 4.0)),
-        light: Light { fov: std::f32::consts::PI * 2.0, ..Default::default() },
+        light: Light {
+            fov: std::f32::consts::PI * 2.0,
+            ..Default::default()
+        },
         ..Default::default()
     });
 }

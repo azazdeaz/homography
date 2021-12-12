@@ -1,4 +1,4 @@
-use bevy::{prelude::{Transform, *}, pbr::AmbientLight};
+use bevy::{pbr::AmbientLight, prelude::*};
 use bevy_egui::EguiPlugin;
 
 mod components;
