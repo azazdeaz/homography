@@ -8,7 +8,5 @@ Run example with: `cargo run --release --example from_images -- --image1 ./test-
 
 Run the demo app with: `cargo run --release --bin demo` (add `--features opencv` to see the resutls of OpenCV's findHomography() as well)
 
-https://user-images.githubusercontent.com/2298371/145678553-12e383df-9457-429a-87a5-631218978638.mp4
-
-
+https://user-images.githubusercontent.com/2298371/146600035-a88b0753-84b8-49d7-932f-e876572ee02d.mp4
 
