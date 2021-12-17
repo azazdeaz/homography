@@ -19,8 +19,7 @@ impl Model<FeatureMatch<Point2>> for HomographyMatrix {
         let b2 = Point2::from_homogeneous(mat * a.to_homogeneous());
         if let Some(b2) = b2 {
             na::distance_squared(b, &b2)
-        }
-        else {
+        } else {
             // TODO is there a "correct" value to use here?
             99999.9
         }

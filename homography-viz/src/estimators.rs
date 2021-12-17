@@ -18,12 +18,11 @@ use opencv::{
 pub struct Estimators;
 impl Plugin for Estimators {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(estimate_homography.system())
-            .add_system(
-                estimate_homography
-                    .system()
-                    .config(|params| params.0 = Some(true)),
-            );
+        app.add_system(estimate_homography.system()).add_system(
+            estimate_homography
+                .system()
+                .config(|params| params.0 = Some(true)),
+        );
 
         #[cfg(feature = "opencv")]
         {

@@ -4,7 +4,7 @@ use bevy_egui::EguiPlugin;
 mod components;
 mod orbit_camera;
 mod utils;
-use components::{MatchEvent, Landmark2, Plane, Camera};
+use components::{Camera, Landmark2, MatchEvent, Plane};
 mod estimators;
 mod gui;
 mod update_landmarks;

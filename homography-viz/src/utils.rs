@@ -2,7 +2,6 @@ use bevy::{
     ecs::{archetype::Archetypes, component::Components, entity::Entities},
     prelude::*,
 };
-use nalgebra::Point3;
 
 pub fn inspect(
     keyboard: Res<Input<KeyCode>>,
@@ -25,16 +24,4 @@ pub fn inspect(
             }
         }
     }
-}
-
-pub fn cross_lines(p: &Point3<f32>, size: f32) -> Vec<[f32; 3]> {
-    let p = p.coords;
-    return vec![
-        [p.x + size, p.y, p.z],
-        [p.x - size, p.y, p.z],
-        [p.x, p.y + size, p.z],
-        [p.x, p.y - size, p.z],
-        [p.x, p.y, p.z + size],
-        [p.x, p.y, p.z - size],
-    ];
 }

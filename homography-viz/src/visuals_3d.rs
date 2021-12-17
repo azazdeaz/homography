@@ -6,9 +6,7 @@ use bevy::{
 use itertools::Itertools;
 use nalgebra::Point3;
 
-use crate::{
-    components::{Camera, Landmarks3},
-};
+use crate::components::{Camera, Landmarks3};
 
 pub struct CamerasAndPlanes3D;
 
@@ -78,8 +76,6 @@ fn update_camera_models(
     }
 }
 
-
-
 struct ArrowModel {}
 
 fn init_arrow_models(mut commands: EntityCommands, asset_server: &Res<AssetServer>) {
@@ -98,7 +94,10 @@ fn init_arrow_models(mut commands: EntityCommands, asset_server: &Res<AssetServe
             .with_children(|parent| {
                 parent
                     .spawn_bundle((
-                        Transform::from_scale(Vec3::splat(0.8)) * Transform::from_rotation(Quat::from_rotation_x(std::f32::consts::FRAC_PI_2)),
+                        Transform::from_scale(Vec3::splat(0.8))
+                            * Transform::from_rotation(Quat::from_rotation_x(
+                                std::f32::consts::FRAC_PI_2,
+                            )),
                         GlobalTransform::identity(),
                     ))
                     .with_children(|parent| {
@@ -127,17 +126,12 @@ fn update_arrow_models(
             transform.translation.x = camera.target_x;
             transform.translation.y = camera.target_y;
             transform.translation.z = camera.target_z;
-            transform.look_at(
-                Vec3::new(camera.x, camera.y, camera.z),
-                Vec3::Y,
-            );
+            transform.look_at(Vec3::new(camera.x, camera.y, camera.z), Vec3::Y);
         } else {
             init_arrow_models(commands.entity(entity), &asset_server);
         }
     }
 }
-
-
 
 fn update_camera_meshes(
     mut commands: Commands,
@@ -167,7 +161,7 @@ fn update_camera_meshes(
         .map(|h| Point3::from_homogeneous(h).unwrap())
         .map(|v| [v.coords.x, v.coords.y, v.coords.z])
         .collect_vec();
-        let mut vertices = vec![
+        let vertices = vec![
             corners[0], corners[1], corners[1], corners[2], corners[2], corners[3], corners[3],
             corners[0], corners[4], corners[5], corners[5], corners[6], corners[6], corners[7],
             corners[7], corners[4], corners[0], corners[4], corners[1], corners[5], corners[2],
