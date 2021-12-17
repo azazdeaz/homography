@@ -31,8 +31,8 @@ impl Default for Camera {
             target_x: 0.0,
             target_y: 0.0,
             target_z: 0.0,
-            noise: 1.0,
-            outlier_proportion: 0.1,
+            noise: 0.0,
+            outlier_proportion: 0.0,
             outlier_noise: 12.0,
         }
     }

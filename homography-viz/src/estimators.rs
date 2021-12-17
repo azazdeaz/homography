@@ -18,9 +18,9 @@ use opencv::{
 pub struct Estimators;
 impl Plugin for Estimators {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_system(estimate_homography_with_arrsac.system())
+        app.add_system(estimate_homography.system())
             .add_system(
-                estimate_homography_with_arrsac
+                estimate_homography
                     .system()
                     .config(|params| params.0 = Some(true)),
             );
@@ -39,7 +39,7 @@ impl std::fmt::Display for EstimationLabel {
     }
 }
 
-pub fn estimate_homography_with_arrsac(
+pub fn estimate_homography(
     use_sc: Local<bool>,
     mut commands: Commands,
     mut ev_matches: EventReader<MatchEvent>,
@@ -99,7 +99,7 @@ pub fn estimate_homography_with_opencv(
             if let Some(estimation_entity) = *estimation_entity {
                 commands.entity(estimation_entity).insert_bundle((hm, time));
             } else {
-                let label = "With OpenCV";
+                let label = "OpenCV with RANSAC";
                 let label = EstimationLabel(label.into());
                 *estimation_entity = Some(commands.spawn().insert_bundle((hm, label, time)).id());
             }

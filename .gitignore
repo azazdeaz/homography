@@ -3,3 +3,4 @@ target
 /build
 /opencv-master
 /install
+*.blend1
