@@ -134,7 +134,7 @@ pub fn estimate_homography_with_opencv(
                     );
 
                     if let Ok(mut res) = opencv_res {
-                        let values = (0..res.total().unwrap() as i32)
+                        let values = (0..res.total() as i32)
                             .map(|i| res.at_mut::<f64>(i).unwrap().clone())
                             .collect_vec();
                         if values.len() == 9 {

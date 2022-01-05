@@ -59,10 +59,8 @@ pub fn render_gui(
             egui::Window::new(format!("Camera {} Image", camera_id))
                 .default_size((width, height))
                 .show(egui_context.ctx(), |ui| {
-                    let (response, painter) = ui.allocate_painter(
-                        ui.available_size_before_wrap_finite(),
-                        egui::Sense::drag(),
-                    );
+                    let (response, painter) =
+                        ui.allocate_painter(egui::Vec2::new(width, height), egui::Sense::drag());
 
                     let left_top = response.rect.left_top();
                     ui.expand_to_include_rect(painter.clip_rect());
@@ -84,7 +82,7 @@ pub fn render_gui(
                 });
 
             for (h, label, time) in results.iter() {
-                egui::Window::new(label).show(egui_context.ctx(), |ui| {
+                egui::Window::new(label.to_string()).show(egui_context.ctx(), |ui| {
                     ui.style_mut().override_text_style = Some(egui::TextStyle::Monospace);
                     ui.style_mut().wrap = Some(false);
                     if let Some(time) = time {
