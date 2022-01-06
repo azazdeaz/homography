@@ -14,14 +14,14 @@
 //!     FeatureMatch(Point2::new(2.0, 4.0), Point2::new(2.0, 6.0)),
 //!     FeatureMatch(Point2::new(7.0, 3.0), Point2::new(7.0, 5.0)),
 //! ];
-//! 
+//!
 //! // Estimate the homography
 //! let result = find_homography(matches).unwrap();
-//! 
+//!
 //! let expected = Matrix3::new(1.0, 0.0, 0.0,
 //!                             0.0, 1.0, 2.0,
 //!                             0.0, 0.0, 1.0);
-//! 
+//!
 //! // The result is close to the expected homography
 //! assert!( result.abs_diff_eq(&expected, 0.0001));
 //! ```
