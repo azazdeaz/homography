@@ -4,6 +4,12 @@
 # Homography
 Rust reimplementation of [OpenCV's homography estimation algorithm](https://github.com/opencv/opencv/blob/a1143c4ea02afa7c45c2a1e86be431b81a83bcd1/modules/calib3d/src/fundam.cpp#L118).
 
+### Install
+```toml
+[dependencies]
+homography = { git = "https://github.com/azazdeaz/homography" }
+```
+
 ### [Usage and Documentation](https://azazdeaz.github.io/homography/homography/)
 
 ### Demos
