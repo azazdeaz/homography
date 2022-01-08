@@ -10,6 +10,8 @@ use sample_consensus::{Estimator, Model};
 #[derive(
     Debug, Clone, Copy, PartialEq, PartialOrd, AsMut, AsRef, Deref, DerefMut, Display, From, Into,
 )]
+
+/// Implements [`cv::Model`](https://docs.rs/cv/0.6.0/cv/trait.Model.html)
 pub struct HomographyMatrix(pub Matrix3<f64>);
 
 impl Model<FeatureMatch<Point2>> for HomographyMatrix {
@@ -26,6 +28,7 @@ impl Model<FeatureMatch<Point2>> for HomographyMatrix {
     }
 }
 
+/// Implements [`cv::Estimator`](https://docs.rs/cv/0.6.0/cv/trait.Estimator.html)
 pub struct HomographyEstimator {}
 
 impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
@@ -46,6 +49,8 @@ impl Estimator<FeatureMatch<Point2>> for HomographyEstimator {
     }
 }
 
+/// Computes the perpective transformation for a set of point matches.
+/// [OpenCV implementation](https://github.com/opencv/opencv/blob/a1143c4ea02afa7c45c2a1e86be431b81a83bcd1/modules/calib3d/src/fundam.cpp#L118-L183)
 pub fn find_homography(matches: Vec<FeatureMatch<Point2>>) -> Result<Matrix3<f64>> {
     // TODO detect degenerate cases
     let (m1, m2): (Vec<_>, Vec<_>) = matches.iter().map(|m| (m.0, m.1)).unzip();

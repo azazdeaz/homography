@@ -23,7 +23,7 @@
 //!                             0.0, 0.0, 1.0);
 //!
 //! // The result is close to the expected homography
-//! assert!( result.abs_diff_eq(&expected, 0.0001));
+//! assert!(result.abs_diff_eq(&expected, 0.0001));
 //! ```
 
 mod homography;
