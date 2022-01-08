@@ -16,9 +16,13 @@
                             <span class="number">0.0</span>, <span class="number">0.0</span>, <span class="number">1.0</span>);
 
 <span class="comment">// The result is close to the expected homography</span>
-<span class="macro">assert!</span>( <span class="ident">result</span>.<span class="ident">abs_diff_eq</span>(<span class="kw-2">&amp;</span><span class="ident">expected</span>, <span class="number">0.0001</span>));</code></pre></div>
+<span class="macro">assert!</span>(<span class="ident">result</span>.<span class="ident">abs_diff_eq</span>(<span class="kw-2">&amp;</span><span class="ident">expected</span>, <span class="number">0.0001</span>));</code></pre></div>
 </div></details><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
-<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.HomographyEstimator.html" title="homography::HomographyEstimator struct">HomographyEstimator</a></div><div class="item-right docblock-short"></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.HomographyMatrix.html" title="homography::HomographyMatrix struct">HomographyMatrix</a></div><div class="item-right docblock-short"></div></div></div><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
-<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.find_homography.html" title="homography::find_homography fn">find_homography</a></div><div class="item-right docblock-short"></div></div></div></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="homography" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.HomographyEstimator.html" title="homography::HomographyEstimator struct">HomographyEstimator</a></div><div class="item-right docblock-short"><p>Implements <a href="https://docs.rs/cv/0.6.0/cv/trait.Estimator.html"><code>cv::Estimator</code></a></p>
+</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.HomographyMatrix.html" title="homography::HomographyMatrix struct">HomographyMatrix</a></div><div class="item-right docblock-short"><p>Implements <a href="https://docs.rs/cv/0.6.0/cv/trait.Model.html"><code>cv::Model</code></a></p>
+</div></div></div><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.find_homography.html" title="homography::find_homography fn">find_homography</a></div><div class="item-right docblock-short"><p>Computes the perpective transformation for a set of point matches.
+<a href="https://github.com/opencv/opencv/blob/a1143c4ea02afa7c45c2a1e86be431b81a83bcd1/modules/calib3d/src/fundam.cpp#L118-L183">OpenCV implementation</a></p>
+</div></div></div></section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="homography" data-search-index-js="../search-index.js" data-search-js="../search.js"></div>
     <script src="../main.js"></script>
 </body></html>

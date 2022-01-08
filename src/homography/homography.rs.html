@@ -146,6 +146,11 @@
 <span id="146">146</span>
 <span id="147">147</span>
 <span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="ident">cv_core::FeatureMatch</span>;
 <span class="kw">use</span> <span class="ident">eyre</span>::{<span class="ident">eyre</span>, <span class="prelude-ty">Result</span>};
 <span class="kw">use</span> <span class="ident">itertools::Itertools</span>;
@@ -158,6 +163,8 @@
 <span class="attribute">#[<span class="ident">derive</span>(
     <span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">PartialEq</span>, <span class="ident">PartialOrd</span>, <span class="ident">AsMut</span>, <span class="ident">AsRef</span>, <span class="ident">Deref</span>, <span class="ident">DerefMut</span>, <span class="ident">Display</span>, <span class="ident">From</span>, <span class="ident">Into</span>,
 )]</span>
+
+<span class="doccomment">/// Implements [`cv::Model`](https://docs.rs/cv/0.6.0/cv/trait.Model.html)</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HomographyMatrix</span>(<span class="kw">pub</span> <span class="ident">Matrix3</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span>);
 
 <span class="kw">impl</span> <span class="ident">Model</span><span class="op">&lt;</span><span class="ident">FeatureMatch</span><span class="op">&lt;</span><span class="ident">Point2</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">HomographyMatrix</span> {
@@ -174,6 +181,7 @@
     }
 }
 
+<span class="doccomment">/// Implements [`cv::Estimator`](https://docs.rs/cv/0.6.0/cv/trait.Estimator.html)</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">HomographyEstimator</span> {}
 
 <span class="kw">impl</span> <span class="ident">Estimator</span><span class="op">&lt;</span><span class="ident">FeatureMatch</span><span class="op">&lt;</span><span class="ident">Point2</span><span class="op">&gt;</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">HomographyEstimator</span> {
@@ -194,6 +202,8 @@
     }
 }
 
+<span class="doccomment">/// Computes the perpective transformation for a set of point matches.</span>
+<span class="doccomment">/// [OpenCV implementation](https://github.com/opencv/opencv/blob/a1143c4ea02afa7c45c2a1e86be431b81a83bcd1/modules/calib3d/src/fundam.cpp#L118-L183)</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">find_homography</span>(<span class="ident">matches</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">FeatureMatch</span><span class="op">&lt;</span><span class="ident">Point2</span><span class="op">&gt;</span><span class="op">&gt;</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Matrix3</span><span class="op">&lt;</span><span class="ident">f64</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="comment">// TODO detect degenerate cases</span>
     <span class="kw">let</span> (<span class="ident">m1</span>, <span class="ident">m2</span>): (<span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>, <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span>) <span class="op">=</span> <span class="ident">matches</span>.<span class="ident">iter</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">m</span><span class="op">|</span> (<span class="ident">m</span>.<span class="number">0</span>, <span class="ident">m</span>.<span class="number">1</span>)).<span class="ident">unzip</span>();

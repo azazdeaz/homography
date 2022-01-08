@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["find_homography",""]],"struct":[["HomographyEstimator",""],["HomographyMatrix",""]]});
+initSidebarItems({"fn":[["find_homography","Computes the perpective transformation for a set of point matches. OpenCV implementation"]],"struct":[["HomographyEstimator","Implements `cv::Estimator`"],["HomographyMatrix","Implements `cv::Model`"]]});
